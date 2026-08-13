@@ -1,7 +1,6 @@
 import {
   products,
   categories,
-  currentUser,
   environments,
   categoryOptions,
   categoryOptionValues,
@@ -21,13 +20,16 @@ import {
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
+import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 export function LogCaseModal() {
+  const { user } = useAuth();
   const { modal, closeModal } = useModal();
   const open = modal.name === "log-case";
+  const userEmail = user?.Email ?? "";
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
@@ -35,6 +37,7 @@ export function LogCaseModal() {
   const [accounts, setAccounts] = useState<ActiveAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
   const [accountsLoading, setAccountsLoading] = useState(false);
+  const [personResponsible, setPersonResponsible] = useState(userEmail);
   const responsibleRef = useRef<HTMLInputElement>(null);
 
   const subcategoryOptions = useMemo(
@@ -49,6 +52,7 @@ export function LogCaseModal() {
     setSubcategory("");
     setSubmitting(false);
     setSelectedAccount("");
+    setPersonResponsible(userEmail);
 
     let cancelled = false;
 
@@ -80,7 +84,7 @@ export function LogCaseModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open]);
+  }, [open, userEmail]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -130,7 +134,7 @@ export function LogCaseModal() {
                 id="case-logged-by"
                 name="loggedBy"
                 type="email"
-                defaultValue={currentUser.email}
+                value={userEmail}
                 readOnly
                 className={ui.fieldControl}
               />
@@ -145,7 +149,8 @@ export function LogCaseModal() {
                 id="case-person-responsible"
                 name="personResponsible"
                 type="email"
-                defaultValue={currentUser.email}
+                value={personResponsible}
+                onChange={(event) => setPersonResponsible(event.target.value)}
                 className={ui.fieldControl}
               />
               <FormHelp>
