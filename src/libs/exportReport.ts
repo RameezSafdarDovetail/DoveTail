@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { downloadBlob } from "./utils";
 
 interface Report {
@@ -6,33 +7,34 @@ interface Report {
   rows: string[][];
 }
 
-function escapeHtml(value: string) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function reportTableHtml(report: Report) {
-  return `<h2>${escapeHtml(
-    report.title
-  )}</h2><table border="1"><thead><tr>${report.headers
-    .map((header) => `<th>${escapeHtml(header)}</th>`)
-    .join("")}</tr></thead><tbody>${report.rows
-    .map(
-      (row) =>
-        `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`
-    )
-    .join("")}</tbody></table>`;
-}
-
 export function exportPortalReport(filename: string, report: Report) {
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>table{border-collapse:collapse}th{background:#0b2c7d;color:#fff}td,th{padding:6px 10px;border:1px solid #cbd5e1;font-family:Arial,sans-serif;font-size:12px}h2{font-family:Arial,sans-serif;color:#0b2c7d}</style></head><body>${reportTableHtml(
-    report
-  )}</body></html>`;
+  const worksheet = XLSX.utils.aoa_to_sheet([report.headers, ...report.rows]);
+  const columnCount = Math.max(
+    report.headers.length,
+    ...report.rows.map((row) => row.length),
+    1
+  );
+  worksheet["!cols"] = Array.from({ length: columnCount }, (_, index) => {
+    const headerWidth = report.headers[index]?.length ?? 0;
+    const rowWidth = report.rows.reduce(
+      (max, row) => Math.max(max, row[index]?.length ?? 0),
+      0
+    );
+    return { wch: Math.min(Math.max(headerWidth, rowWidth, 12) + 2, 60) };
+  });
 
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    report.title.slice(0, 31) || "Sheet1"
+  );
+
+  const data = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   downloadBlob(
-    filename.endsWith(".xls") ? filename : `${filename}.xls`,
-    new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" })
+    filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`,
+    new Blob([data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    })
   );
 }
