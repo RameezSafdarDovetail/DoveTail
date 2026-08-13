@@ -100,6 +100,7 @@ export function AllCasesPage() {
             <>
               <Button
                 variant="secondary"
+                disabled={loading || visible.length === 0}
                 onClick={() =>
                   exportPortalReport("Dovetail-All-Cases", {
                     title: "All My Cases",

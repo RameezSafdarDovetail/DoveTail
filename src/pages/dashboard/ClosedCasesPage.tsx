@@ -92,6 +92,7 @@ export function ClosedCasesPage() {
           actions={
             <Button
               variant="secondary"
+              disabled={loading || visible.length === 0}
               onClick={() =>
                 exportPortalReport("Dovetail-Closed-Cases", {
                   title: "Closed Cases",

@@ -86,6 +86,7 @@ export function QuotesPage() {
           actions={
             <Button
               variant="secondary"
+              disabled={loading || visible.length === 0}
               onClick={() =>
                 exportPortalReport("Dovetail-Quotes", {
                   title: "My Quotes",

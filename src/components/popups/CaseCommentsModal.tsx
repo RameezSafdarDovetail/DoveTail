@@ -22,13 +22,13 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 export function CaseCommentsModal() {
   const { user } = useAuth();
   const userEmail = user?.Email ?? "";
+  const [status, setStatus] = useState("");
   const { modal, closeModal } = useModal();
+  const [search, setSearch] = useState("");
+  const [subject, setSubject] = useState("");
   const open = modal.name === "case-comments";
   const searchRef = useRef<HTMLInputElement>(null);
-  const [search, setSearch] = useState("");
   const [linkedCase, setLinkedCase] = useState("");
-  const [status, setStatus] = useState("");
-  const [subject, setSubject] = useState("");
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cases, setCases] = useState<CaseChangeRequestInfo[]>([]);

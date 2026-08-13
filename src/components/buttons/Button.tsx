@@ -27,7 +27,12 @@ export function Button({
   return (
     <button
       type={type}
-      className={cn(variants[variant], compact && 'px-3 py-[7px] text-[12.5px]', className)}
+      className={cn(
+        variants[variant],
+        compact && 'px-3 py-[7px] text-[12.5px]',
+        'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+        className,
+      )}
       {...props}
     >
       {children}

@@ -110,6 +110,7 @@ export function OpenCasesPage() {
             <>
               <Button
                 variant="secondary"
+                disabled={loading || visible.length === 0}
                 onClick={() =>
                   exportPortalReport("Dovetail-Open-Cases", {
                     title: "Open Cases",
