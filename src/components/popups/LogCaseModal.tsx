@@ -235,7 +235,7 @@ export function LogCaseModal() {
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-category" required>
-                Category
+                Type
               </FormLabel>
               <select
                 id="case-category"
@@ -258,7 +258,7 @@ export function LogCaseModal() {
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-subcategory" required>
-                Subcategory
+                Subject
               </FormLabel>
               <select
                 id="case-subcategory"

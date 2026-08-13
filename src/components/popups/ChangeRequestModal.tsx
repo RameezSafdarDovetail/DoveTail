@@ -7,14 +7,14 @@ import {
   FormAttach,
   FormSection,
 } from "./FormPrimitives";
-import { ui } from "../../libs/ui";
-import { Button } from "../buttons/Button";
-import { useModal } from "../../hooks/useModal";
 import {
   createChangeRequest,
   getCaseChangeRequestInfo,
   type CaseChangeRequestInfo,
 } from "../../apis/getActiveCases";
+import { ui } from "../../libs/ui";
+import { Button } from "../buttons/Button";
+import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -91,16 +91,16 @@ export function ChangeRequestModal() {
     };
   }, [modal.caseNumber, open]);
 
-  function approveChangeRequest() {
-    const approver = document.getElementById(
-      "cr-approved-by"
-    ) as HTMLInputElement | null;
-    if (!approver?.value) {
-      approver?.focus();
-      return;
-    }
-    setApprovedAt(formatStamp());
-  }
+  // function approveChangeRequest() {
+  //   const approver = document.getElementById(
+  //     "cr-approved-by"
+  //   ) as HTMLInputElement | null;
+  //   if (!approver?.value) {
+  //     approver?.focus();
+  //     return;
+  //   }
+  //   setApprovedAt(formatStamp());
+  // }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -355,9 +355,9 @@ export function ChangeRequestModal() {
                     className={ui.fieldControl}
                   />
                 </FormField>
-                <Button variant="secondary" onClick={approveChangeRequest}>
+                {/* <Button variant="secondary" onClick={approveChangeRequest}>
                   Approve
-                </Button>
+                </Button> */}
               </div>
               <FormField className="mt-2.5">
                 <FormLabel htmlFor="cr-approved-at">

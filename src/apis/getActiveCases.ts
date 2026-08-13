@@ -15,6 +15,31 @@ export interface ActiveCase {
   CaseAge: string;
   Sla: string;
   Priority: string;
+  CustomerReference?: string | null;
+}
+
+export function matchesCaseSearch(
+  item: ActiveCase,
+  term: string,
+  by?: string | null
+) {
+  const query = term.trim().toLowerCase();
+  if (!query) return true;
+
+  const title = (item.Title ?? "").toLowerCase();
+  const caseNumber = item.CaseNumber.toLowerCase();
+  const customerReference = (item.CustomerReference ?? "").toLowerCase();
+
+  if (by === "Case Number") return caseNumber.includes(query);
+  if (by === "Client Reference Number")
+    return customerReference.includes(query);
+  if (by === "Keywords") return title.includes(query);
+
+  return (
+    caseNumber.includes(query) ||
+    title.includes(query) ||
+    customerReference.includes(query)
+  );
 }
 
 export function mapPriority(priority: string): CasePriority {

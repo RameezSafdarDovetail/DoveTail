@@ -5,6 +5,7 @@ import {
   type ActiveCase,
   mapCatalogStatus,
   mapPriorityLabel,
+  matchesCaseSearch,
   mapCatalogStatusLabel,
 } from "../../apis/getActiveCases";
 import { Plus } from "lucide-react";
@@ -45,6 +46,7 @@ export function OpenCasesPage() {
   const priority =
     (params.get("priority") as CasePriority | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
+  const searchBy = params.get("by");
   const [cases, setCases] = useState<ActiveCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,22 +85,12 @@ export function OpenCasesPage() {
   }, [contactId]);
 
   const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
     return cases.filter((item) => {
       const casePriority = mapPriority(item.Priority);
-      const title = item.Title ?? "";
-      const statusLabel = mapCatalogStatusLabel(item.Status);
       const matchesPriority = priority === "all" || casePriority === priority;
-      const matchesQuery =
-        !term ||
-        item.CaseNumber.toLowerCase().includes(term) ||
-        title.toLowerCase().includes(term) ||
-        statusLabel.toLowerCase().includes(term) ||
-        item.Priority.toLowerCase().includes(term) ||
-        item.Sla.toLowerCase().includes(term);
-      return matchesPriority && matchesQuery;
+      return matchesPriority && matchesCaseSearch(item, query, searchBy);
     });
-  }, [cases, priority, query]);
+  }, [cases, priority, query, searchBy]);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params);

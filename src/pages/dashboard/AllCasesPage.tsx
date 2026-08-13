@@ -4,6 +4,7 @@ import {
   mapPriorityType,
   mapCatalogStatus,
   type ActiveCase,
+  matchesCaseSearch,
   mapCatalogStatusLabel,
 } from "../../apis/getActiveCases";
 import { useAuth } from "../../hooks/useAuth";
@@ -38,6 +39,7 @@ export function AllCasesPage() {
   const [params, setParams] = useSearchParams();
   const status = (params.get("status") as CaseStatus | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
+  const searchBy = params.get("by");
   const [cases, setCases] = useState<ActiveCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,23 +76,12 @@ export function AllCasesPage() {
   }, [contactId]);
 
   const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
     return cases.filter((item) => {
       const catalogStatus = mapCatalogStatus(item.Status);
-      const title = item.Title ?? "";
-      const type = mapPriorityType(item.Priority);
-      const statusLabel = mapCatalogStatusLabel(item.Status);
       const matchesStatus = status === "all" || catalogStatus === status;
-      const matchesQuery =
-        !term ||
-        item.CaseNumber.toLowerCase().includes(term) ||
-        title.toLowerCase().includes(term) ||
-        type.toLowerCase().includes(term) ||
-        statusLabel.toLowerCase().includes(term) ||
-        item.Priority.toLowerCase().includes(term);
-      return matchesStatus && matchesQuery;
+      return matchesStatus && matchesCaseSearch(item, query, searchBy);
     });
-  }, [cases, query, status]);
+  }, [cases, query, searchBy, status]);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params);
