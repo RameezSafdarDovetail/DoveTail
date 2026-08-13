@@ -92,7 +92,27 @@ export function ClosedCasesPage() {
           actions={
             <Button
               variant="secondary"
-              onClick={() => exportPortalReport("closed")}
+              onClick={() =>
+                exportPortalReport("Dovetail-Closed-Cases", {
+                  title: "Closed Cases",
+                  headers: [
+                    "Case #",
+                    "Title",
+                    "Type",
+                    "Subject",
+                    "Resolution",
+                    "Closed",
+                  ],
+                  rows: visible.map((item) => [
+                    item.CaseNumber,
+                    item.Title || "Untitled case",
+                    mapPriorityType(item.Priority),
+                    item.Priority,
+                    mapCatalogStatusLabel(item.Status),
+                    formatCaseDate(item.CreatedOn),
+                  ]),
+                })
+              }
             >
               ↓ Export Excel
             </Button>

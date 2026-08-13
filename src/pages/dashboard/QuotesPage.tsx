@@ -86,7 +86,27 @@ export function QuotesPage() {
           actions={
             <Button
               variant="secondary"
-              onClick={() => exportPortalReport("quotes")}
+              onClick={() =>
+                exportPortalReport("Dovetail-Quotes", {
+                  title: "My Quotes",
+                  headers: [
+                    "Quote #",
+                    "Title",
+                    "Product",
+                    "Subject",
+                    "Status",
+                    "Date",
+                  ],
+                  rows: visible.map((item) => [
+                    item.QuoteNumber,
+                    item.Title || "Untitled quote",
+                    item.Product || "—",
+                    item.Subject || "—",
+                    item.Status,
+                    formatCaseDate(item.CreatedOn),
+                  ]),
+                })
+              }
             >
               ↓ Export Excel
             </Button>

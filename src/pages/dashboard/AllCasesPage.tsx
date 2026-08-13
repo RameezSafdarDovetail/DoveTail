@@ -100,7 +100,27 @@ export function AllCasesPage() {
             <>
               <Button
                 variant="secondary"
-                onClick={() => exportPortalReport("all-cases")}
+                onClick={() =>
+                  exportPortalReport("Dovetail-All-Cases", {
+                    title: "All My Cases",
+                    headers: [
+                      "Case #",
+                      "Title",
+                      "Type",
+                      "Subject",
+                      "Status",
+                      "Date",
+                    ],
+                    rows: visible.map((item) => [
+                      item.CaseNumber,
+                      item.Title || "Untitled case",
+                      mapPriorityType(item.Priority),
+                      item.Priority,
+                      mapCatalogStatusLabel(item.Status),
+                      formatCaseDate(item.CreatedOn),
+                    ]),
+                  })
+                }
               >
                 ↓ Export Excel
               </Button>
