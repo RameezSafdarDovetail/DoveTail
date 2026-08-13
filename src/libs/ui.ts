@@ -32,6 +32,7 @@ export const ui = {
   formBody: "px-5 pb-4 pt-[18px]",
   attach:
     "flex w-fit cursor-pointer items-center gap-2.5 text-sm font-bold text-text-1",
+  tableScrollBody: "max-h-[680px] overflow-y-auto",
 } as const;
 
 export const tableCols = {

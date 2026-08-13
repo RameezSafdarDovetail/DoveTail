@@ -135,6 +135,7 @@ export function HomePage() {
                 <span>Age</span>
                 <span>SLA</span>
               </div>
+              <div className={cn(ui.tableScrollBody, "max-[980px]:min-w-[680px]")}>
               {loading ? (
                 <div className="px-[18px] py-4 text-[12.5px] text-text-3">
                   Loading active cases…
@@ -182,6 +183,7 @@ export function HomePage() {
                   </div>
                 );
               })}
+              </div>
             </div>
           </section>
         </div>
