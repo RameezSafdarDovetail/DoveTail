@@ -336,6 +336,27 @@ export interface CaseChangeRequestInfo {
   LinkedCaseDetails: string;
   Account: string;
   RequesterEmail: string;
+  CreatedOn: string;
+}
+
+export interface UpdateCaseCommentPayload {
+  CaseId: string;
+  UserEmail: string;
+  CommentSubject: string;
+  CommentDetail: string;
+}
+
+export interface UpdateCaseCommentResponse {
+  success?: boolean;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export async function updateCaseComment(payload: UpdateCaseCommentPayload) {
+  return apiRequest<UpdateCaseCommentResponse>("UpdateCaseComment", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getCaseChangeRequestInfo() {

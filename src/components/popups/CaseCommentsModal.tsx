@@ -1,9 +1,4 @@
 import {
-  currentUser,
-  mockCaseDetails,
-  commentCaseOptions,
-} from "../../data/cases";
-import {
   FormNote,
   FormGrid,
   FormField,
@@ -11,36 +6,49 @@ import {
   FormAttach,
   FormSection,
 } from "./FormPrimitives";
+import {
+  updateCaseComment,
+  getCaseChangeRequestInfo,
+  type CaseChangeRequestInfo,
+} from "../../apis/getActiveCases";
 import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
+import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
-import { initialComments } from "../../data/comments";
-import type { CaseComment } from "../../data/comments";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 export function CaseCommentsModal() {
+  const { user } = useAuth();
+  const userEmail = user?.Email ?? "";
   const { modal, closeModal } = useModal();
   const open = modal.name === "case-comments";
   const searchRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
-  const [linkedCase, setLinkedCase] = useState("C496");
-  const [timestamp, setTimestamp] = useState(formatStamp());
-  const [comments, setComments] = useState<CaseComment[]>(initialComments);
+  const [linkedCase, setLinkedCase] = useState("");
   const [status, setStatus] = useState("");
   const [subject, setSubject] = useState("");
   const [detail, setDetail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [cases, setCases] = useState<CaseChangeRequestInfo[]>([]);
+  const [casesLoading, setCasesLoading] = useState(false);
 
-  const filteredOptions = useMemo(() => {
-    const term = search.toLowerCase();
-    if (!term) return commentCaseOptions;
-    return commentCaseOptions.filter(
-      (option) =>
-        option.label.toLowerCase().includes(term) ||
-        option.value.toLowerCase().includes(term)
+  const filteredCases = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return cases;
+    return cases.filter(
+      (item) =>
+        item.CaseNumber.toLowerCase().includes(term) ||
+        (item.LinkedCaseDetails ?? "").toLowerCase().includes(term) ||
+        (item.Account ?? "").toLowerCase().includes(term)
     );
-  }, [search]);
+  }, [cases, search]);
+
+  const selectedCase = useMemo(
+    () => cases.find((item) => item.CaseNumber === linkedCase) ?? null,
+    [cases, linkedCase]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -48,41 +56,78 @@ export function CaseCommentsModal() {
     setSearch("");
     setSubject("");
     setDetail("");
-    const initial = modal.caseNumber
-      ? normalizeCaseNumber(modal.caseNumber)
-      : "C496";
-    const match = commentCaseOptions.find(
-      (option) =>
-        option.value === initial ||
-        option.label.includes(modal.caseNumber ?? "")
-    );
-    setLinkedCase(match?.value ?? "C496");
-    setTimestamp(formatStamp());
+    setLinkedCase("");
+    setCases([]);
+    setSubmitting(false);
+
+    let cancelled = false;
+
+    async function loadCases() {
+      setCasesLoading(true);
+      try {
+        const data = await getCaseChangeRequestInfo();
+        if (cancelled) return;
+        setCases(data);
+        const initial = modal.caseNumber
+          ? normalizeCaseNumber(modal.caseNumber)
+          : "";
+        const match = data.find(
+          (item) =>
+            item.CaseNumber === initial ||
+            item.CaseNumber.includes(modal.caseNumber ?? "") ||
+            item.CaseId === modal.caseNumber
+        );
+        setLinkedCase(match?.CaseNumber ?? "");
+      } catch (error) {
+        if (!cancelled) {
+          setCases([]);
+          setStatus(
+            error instanceof Error ? error.message : "Failed to load cases"
+          );
+        }
+      } finally {
+        if (!cancelled) setCasesLoading(false);
+      }
+    }
+
+    void loadCases();
+
     const timer = window.setTimeout(() => searchRef.current?.focus(), 40);
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [modal.caseNumber, open]);
 
-  useEffect(() => {
-    if (open) setTimestamp(formatStamp());
-  }, [linkedCase, open]);
+  const createdOnStamp = useMemo(() => {
+    if (!selectedCase?.CreatedOn) return "";
+    const date = new Date(selectedCase.CreatedOn);
+    if (Number.isNaN(date.getTime())) return "";
+    return formatStamp(date);
+  }, [selectedCase?.CreatedOn]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log(subject, detail);
-    const comment: CaseComment = {
-      id: `c-${Date.now()}`,
-      email: currentUser.email,
-      stamp: formatStamp(),
-      subject,
-      detail,
-    };
-    setComments((current) => [comment, ...current]);
-    setStatus(
-      "Comment added in this mockup. In D365 this would submit to the case comments queue."
-    );
-    setSubject("");
-    setDetail("");
-    setTimestamp(formatStamp());
+    if (submitting || !selectedCase) return;
+
+    setSubmitting(true);
+    try {
+      await updateCaseComment({
+        CaseId: selectedCase.CaseId,
+        UserEmail: userEmail,
+        CommentSubject: subject,
+        CommentDetail: detail,
+      });
+      setStatus("Comment added successfully");
+      setSubject("");
+      setDetail("");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Failed to add comment"
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -116,13 +161,17 @@ export function CaseCommentsModal() {
               <select
                 id="comment-linked-case"
                 required
+                disabled={casesLoading || filteredCases.length === 0}
                 value={linkedCase}
                 onChange={(event) => setLinkedCase(event.target.value)}
                 className={cn(ui.fieldControl, "cursor-pointer")}
               >
-                {filteredOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                <option value="">
+                  {casesLoading ? "Loading cases…" : "-- Select case number --"}
+                </option>
+                {filteredCases.map((item) => (
+                  <option key={item.CaseId} value={item.CaseNumber}>
+                    {item.CaseNumber}
                   </option>
                 ))}
               </select>
@@ -132,7 +181,7 @@ export function CaseCommentsModal() {
               <textarea
                 id="comment-case-details"
                 readOnly
-                value={mockCaseDetails[linkedCase] ?? ""}
+                value={selectedCase?.LinkedCaseDetails ?? ""}
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
             </FormField>
@@ -149,7 +198,7 @@ export function CaseCommentsModal() {
               <input
                 id="comment-user-email"
                 type="email"
-                value={currentUser.email}
+                value={userEmail}
                 readOnly
                 className={ui.fieldControl}
               />
@@ -159,7 +208,7 @@ export function CaseCommentsModal() {
               <input
                 id="comment-timestamp"
                 type="text"
-                value={timestamp}
+                value={createdOnStamp}
                 readOnly
                 className={ui.fieldControl}
               />
@@ -202,7 +251,7 @@ export function CaseCommentsModal() {
                 className={ui.fieldControl}
               />
             </FormField>
-            <div className="col-span-full grid gap-2.5 rounded-lg border border-border-soft bg-[#f8fafc] p-3">
+            {/* <div className="col-span-full grid gap-2.5 rounded-lg border border-border-soft bg-[#f8fafc] p-3">
               {comments.map((comment) => (
                 <div
                   className="border-b border-border-soft pb-2.5 last:border-b-0 last:pb-0"
@@ -215,15 +264,20 @@ export function CaseCommentsModal() {
                   <div>{comment.detail}</div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </FormGrid>
         </div>
         <ModalActions>
           <Button variant="secondary" onClick={closeModal}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit">
-            Add comment
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={submitting || casesLoading}
+            className={submitting ? "cursor-not-allowed opacity-60" : undefined}
+          >
+            {submitting ? "Submitting…" : "Add comment"}
           </Button>
         </ModalActions>
         <ModalStatus>{status}</ModalStatus>

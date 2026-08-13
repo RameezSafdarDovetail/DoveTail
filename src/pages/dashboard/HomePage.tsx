@@ -135,54 +135,57 @@ export function HomePage() {
                 <span>Age</span>
                 <span>SLA</span>
               </div>
-              <div className={cn(ui.tableScrollBody, "max-[980px]:min-w-[680px]")}>
-              {loading ? (
-                <div className="px-[18px] py-4 text-[12.5px] text-text-3">
-                  Loading active cases…
-                </div>
-              ) : null}
-              {error ? (
-                <div className="px-[18px] py-4 text-[12.5px] text-red">
-                  {error}
-                </div>
-              ) : null}
-              {!loading && !error && visibleCases.length === 0 ? (
-                <div className="px-[18px] py-4 text-[12.5px] text-text-3">
-                  No active cases found.
-                </div>
-              ) : null}
-              {visibleCases.map((item) => {
-                const casePriority = mapPriority(item.Priority);
-                const status = mapStatus(item.Status);
-                const slaTone = mapSla(item.Sla);
-
-                return (
-                  <div
-                    key={item.Id}
-                    className="grid cursor-pointer grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px]"
-                    onClick={() => openCaseComments(item.CaseNumber)}
-                  >
-                    <span>
-                      <PriorityBadge priority={casePriority}>
-                        {mapPriorityLabel(casePriority)}
-                      </PriorityBadge>
-                    </span>
-                    <div>
-                      <strong>{item.CaseNumber}</strong>
-                      <small className="mt-0.5 block text-text-3">
-                        {item.Title || "Untitled case"}
-                      </small>
-                    </div>
-                    <span>
-                      <StatusChip tone={status.tone}>{status.label}</StatusChip>
-                    </span>
-                    <span>{item.CaseAge}</span>
-                    <span>
-                      <SlaChip tone={slaTone}>{item.Sla}</SlaChip>
-                    </span>
+              <div
+                className={cn(ui.tableScrollBody, "max-[980px]:min-w-[680px]")}
+              >
+                {loading ? (
+                  <div className="px-[18px] py-4 text-[12.5px] text-text-3">
+                    Loading active cases…
                   </div>
-                );
-              })}
+                ) : null}
+                {error ? (
+                  <div className="px-[18px] py-4 text-[12.5px] text-red">
+                    {error}
+                  </div>
+                ) : null}
+                {!loading && !error && visibleCases.length === 0 ? (
+                  <div className="px-[18px] py-4 text-[12.5px] text-text-3">
+                    No active cases found.
+                  </div>
+                ) : null}
+                {visibleCases.map((item) => {
+                  const casePriority = mapPriority(item.Priority);
+                  const status = mapStatus(item.Status);
+                  const slaTone = mapSla(item.Sla);
+
+                  return (
+                    <div
+                      key={item.Id}
+                      className="grid grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px]"
+                    >
+                      <span>
+                        <PriorityBadge priority={casePriority}>
+                          {mapPriorityLabel(casePriority)}
+                        </PriorityBadge>
+                      </span>
+                      <div>
+                        <strong>{item.CaseNumber}</strong>
+                        <small className="mt-0.5 block text-text-3">
+                          {item.Title || "Untitled case"}
+                        </small>
+                      </div>
+                      <span>
+                        <StatusChip tone={status.tone}>
+                          {status.label}
+                        </StatusChip>
+                      </span>
+                      <span>{item.CaseAge}</span>
+                      <span>
+                        <SlaChip tone={slaTone}>{item.Sla}</SlaChip>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </section>
