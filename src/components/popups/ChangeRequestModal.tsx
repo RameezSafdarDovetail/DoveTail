@@ -16,7 +16,7 @@ import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
-import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
+import { cn, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 const SUPPORTING_DOC_OPTIONS = [
