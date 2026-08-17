@@ -19,10 +19,10 @@ import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 
 const quoteStatusOptions = [
-  { id: "pending", label: "Pending" },
-  { id: "awaiting", label: "Awaiting Approval" },
-  { id: "declined", label: "Declined" },
-  { id: "completed", label: "Completed" },
+  { id: "quoting-in-progress", label: "Quoting In Progress" },
+  { id: "awaiting-customer", label: "Awaiting Customer Response" },
+  { id: "quote-accepted", label: "Quote Accepted" },
+  { id: "quote-rejected", label: "Quote Rejected" },
 ] as const;
 
 type QuoteStatusFilter = (typeof quoteStatusOptions)[number]["id"] | "all";
@@ -30,10 +30,9 @@ type QuoteStatusFilter = (typeof quoteStatusOptions)[number]["id"] | "all";
 function matchesQuoteStatus(status: string, filter: QuoteStatusFilter) {
   if (filter === "all") return true;
   const value = status.toLowerCase();
-  if (filter === "pending") return value.includes("pending");
-  if (filter === "awaiting") return value.includes("await");
-  if (filter === "declined") return value.includes("declined");
-  return value.includes("completed");
+  const selected = quoteStatusOptions.find((option) => option.id === filter);
+  if (!selected) return true;
+  return value.includes(selected.label.toLowerCase());
 }
 
 export function QuotesPage() {
