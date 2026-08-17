@@ -1,27 +1,27 @@
-import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../../components/buttons/Button";
 import {
   FormField,
   FormGrid,
   FormHelp,
   FormLabel,
 } from "../../components/popups/FormPrimitives";
-import { AuthLayout } from "../../components/layout/AuthLayout";
-import { checkEmailExists, loginContact, registerContact } from "../../apis/auth";
-import { PasswordField } from "../../components/form/PasswordField";
-import { useAuth } from "../../hooks/useAuth";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
+import { Link } from "react-router-dom";
 import { paths } from "../../routes/paths";
+import { useState, type FormEvent } from "react";
+import { Button } from "../../components/buttons/Button";
+import { AuthLayout } from "../../components/layout/AuthLayout";
+import { checkEmailExists, registerContact } from "../../apis/auth";
+import { PasswordField } from "../../components/form/PasswordField";
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+const REGISTER_SUCCESS_MESSAGE =
+  "You’ve registered successfully. You’ll receive an account activation email from our support team. Once your account is activated, you can log in.";
+
 export function CreateAccountPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,6 +29,7 @@ export function CreateAccountPage() {
   const [retypePassword, setRetypePassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState("");
+  const [registered, setRegistered] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
@@ -101,13 +102,12 @@ export function CreateAccountPage() {
         Email: trimmedEmail,
         Password: password,
       });
-      const session = await loginContact({
-        Email: trimmedEmail,
-        Password: password,
-      });
-      login(session);
-      navigate(paths.home, { replace: true });
+      setRegistered(true);
+      setStatus(REGISTER_SUCCESS_MESSAGE);
+      setPassword("");
+      setRetypePassword("");
     } catch (error) {
+      setRegistered(false);
       setStatus(
         error instanceof Error ? error.message : "Failed to create account"
       );
@@ -265,7 +265,14 @@ export function CreateAccountPage() {
             </FormField>
           </div>
           {status ? (
-            <div className="mt-3 text-[13px] font-bold text-red">{status}</div>
+            <div
+              className={cn(
+                "mt-3 text-[13px] leading-normal font-bold",
+                registered ? "text-green" : "text-red"
+              )}
+            >
+              {status}
+            </div>
           ) : null}
         </div>
 
@@ -273,13 +280,17 @@ export function CreateAccountPage() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting}
+            disabled={submitting || registered}
             className={cn(
               "w-full flex-1",
-              submitting && "cursor-not-allowed opacity-60"
+              (submitting || registered) && "cursor-not-allowed opacity-60"
             )}
           >
-            {submitting ? "Creating account…" : "Create account"}
+            {submitting
+              ? "Creating account…"
+              : registered
+              ? "Account created"
+              : "Create account"}
           </Button>
         </div>
 

@@ -1,15 +1,14 @@
 import {
   getAllCases,
   formatCaseDate,
+  type ActiveCase,
   mapPriorityType,
   mapCatalogStatus,
-  type ActiveCase,
   matchesCaseSearch,
   mapCatalogStatusLabel,
 } from "../../apis/getActiveCases";
-import { useAuth } from "../../hooks/useAuth";
 import { tableCols, ui } from "../../libs/ui";
-import { useModal } from "../../hooks/useModal";
+import { useAuth } from "../../hooks/useAuth";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Pill } from "../../components/badges/Pill";
@@ -35,7 +34,6 @@ const tabs: Array<{ id: CaseStatus | "all"; label: string }> = [
 export function AllCasesPage() {
   const { user } = useAuth();
   const contactId = user?.ContactId ?? "";
-  const { openLogCase } = useModal();
   const [params, setParams] = useSearchParams();
   const status = (params.get("status") as CaseStatus | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
@@ -124,9 +122,6 @@ export function AllCasesPage() {
                 }
               >
                 ↓ Export Excel
-              </Button>
-              <Button variant="primary" onClick={openLogCase}>
-                + New Case
               </Button>
             </>
           }

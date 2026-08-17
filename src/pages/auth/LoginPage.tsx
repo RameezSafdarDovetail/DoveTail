@@ -1,18 +1,18 @@
-import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { loginContact } from "../../apis/auth";
-import { Button } from "../../components/buttons/Button";
-import { PasswordField } from "../../components/form/PasswordField";
 import {
   FormField,
   FormHelp,
   FormLabel,
 } from "../../components/popups/FormPrimitives";
-import { AuthLayout } from "../../components/layout/AuthLayout";
-import { useAuth } from "../../hooks/useAuth";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { paths } from "../../routes/paths";
+import { useAuth } from "../../hooks/useAuth";
+import { loginContact } from "../../apis/auth";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../../components/buttons/Button";
+import { AuthLayout } from "../../components/layout/AuthLayout";
+import { PasswordField } from "../../components/form/PasswordField";
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -65,9 +65,7 @@ export function LoginPage() {
       login(session);
       navigate(paths.home, { replace: true });
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : "Failed to sign in"
-      );
+      setStatus(error instanceof Error ? error.message : "Failed to sign in");
     } finally {
       setSubmitting(false);
     }

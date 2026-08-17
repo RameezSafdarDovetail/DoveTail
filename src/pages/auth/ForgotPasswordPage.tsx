@@ -7,9 +7,9 @@ import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { paths } from "../../routes/paths";
 import { useState, type FormEvent } from "react";
+import { checkEmailExists } from "../../apis/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/buttons/Button";
-import { checkEmailExists } from "../../apis/auth";
 import { AuthLayout } from "../../components/layout/AuthLayout";
 
 function isValidEmail(value: string) {

@@ -4,12 +4,12 @@ import {
   type QuoteItem,
   mapQuoteStatusTone,
 } from "../../apis/getActiveCases";
+import { useAuth } from "../../hooks/useAuth";
 import { tableCols, ui } from "../../libs/ui";
 import { cn, pluralize } from "../../libs/utils";
 import { Pill } from "../../components/badges/Pill";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "../../components/badges/Badge";
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
@@ -18,11 +18,32 @@ import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 
+const quoteStatusOptions = [
+  { id: "pending", label: "Pending" },
+  { id: "awaiting", label: "Awaiting Approval" },
+  { id: "declined", label: "Declined" },
+  { id: "completed", label: "Completed" },
+] as const;
+
+type QuoteStatusFilter = (typeof quoteStatusOptions)[number]["id"] | "all";
+
+function matchesQuoteStatus(status: string, filter: QuoteStatusFilter) {
+  if (filter === "all") return true;
+  const value = status.toLowerCase();
+  if (filter === "pending") return value.includes("pending");
+  if (filter === "awaiting") return value.includes("await");
+  if (filter === "declined") return value.includes("declined");
+  return value.includes("completed");
+}
+
 export function QuotesPage() {
   const { user } = useAuth();
   const contactId = user?.ContactId;
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<"mine" | "all">("mine");
+  const [statusFilter, setStatusFilter] = useState<QuoteStatusFilter>("all");
+  const [statusOpen, setStatusOpen] = useState(false);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,9 +81,33 @@ export function QuotesPage() {
     };
   }, [contactId]);
 
+  useEffect(() => {
+    if (!statusOpen) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (!dropdownRef.current?.contains(event.target as Node)) {
+        setStatusOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [statusOpen]);
+
+  const statusFilterLabel = useMemo(() => {
+    if (statusFilter === "all") return "My Quotes";
+    return (
+      quoteStatusOptions.find((option) => option.id === statusFilter)?.label ??
+      "My Quotes"
+    );
+  }, [statusFilter]);
+
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     return quotes.filter((item) => {
+      const matchesStatus =
+        scope === "all" || matchesQuoteStatus(item.Status, statusFilter);
+      if (!matchesStatus) return false;
       if (!term) return true;
       const title = item.Title ?? "";
       const product = item.Product ?? "";
@@ -75,7 +120,7 @@ export function QuotesPage() {
         item.Status.toLowerCase().includes(term)
       );
     });
-  }, [query, quotes]);
+  }, [query, quotes, scope, statusFilter]);
 
   return (
     <div className={ui.view}>
@@ -120,14 +165,54 @@ export function QuotesPage() {
             onChange={setQuery}
             placeholder="Search quotes…"
           />
+          <div className="relative" ref={dropdownRef}>
+            <FilterPill
+              active={scope === "mine"}
+              showDot
+              aria-expanded={statusOpen}
+              aria-haspopup="listbox"
+              onClick={() => {
+                setScope("mine");
+                setStatusOpen((open) => !open);
+              }}
+            >
+              {statusFilterLabel} <span>▾</span>
+            </FilterPill>
+            {statusOpen ? (
+              <div
+                role="listbox"
+                className="absolute top-[calc(100%+6px)] left-0 z-20 min-w-[210px] overflow-hidden rounded-[9px] border border-white/56 bg-white py-1 shadow-card"
+              >
+                {quoteStatusOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="option"
+                    aria-selected={statusFilter === option.id}
+                    className={cn(
+                      "flex w-full cursor-pointer items-center px-3.5 py-2 text-left font-sans text-[13px] font-medium text-text-2 hover:bg-accent-soft hover:text-accent",
+                      statusFilter === option.id && "bg-accent-soft text-accent"
+                    )}
+                    onClick={() => {
+                      setScope("mine");
+                      setStatusFilter(option.id);
+                      setStatusOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <FilterPill
-            active={scope === "mine"}
-            showDot
-            onClick={() => setScope("mine")}
+            active={scope === "all"}
+            onClick={() => {
+              setScope("all");
+              setStatusFilter("all");
+              setStatusOpen(false);
+            }}
           >
-            My Quotes <span>▾</span>
-          </FilterPill>
-          <FilterPill active={scope === "all"} onClick={() => setScope("all")}>
             All Quotes
           </FilterPill>
           <span className={ui.controlsMeta}>

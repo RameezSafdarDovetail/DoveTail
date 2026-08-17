@@ -1,17 +1,17 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { resetPassword } from "../../apis/auth";
-import { Button } from "../../components/buttons/Button";
-import { PasswordField } from "../../components/form/PasswordField";
 import {
   FormField,
   FormHelp,
   FormLabel,
 } from "../../components/popups/FormPrimitives";
-import { AuthLayout } from "../../components/layout/AuthLayout";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { paths } from "../../routes/paths";
+import { resetPassword } from "../../apis/auth";
+import { Button } from "../../components/buttons/Button";
+import { useEffect, useState, type FormEvent } from "react";
+import { AuthLayout } from "../../components/layout/AuthLayout";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { PasswordField } from "../../components/form/PasswordField";
 
 export function UpdatePasswordPage() {
   const navigate = useNavigate();
