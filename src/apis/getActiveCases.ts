@@ -1,4 +1,4 @@
-import { apiRequest } from "./index";
+import { apiRequest, apiFormRequest } from "./index";
 import type {
   SlaTone,
   CaseStatus,
@@ -290,10 +290,10 @@ export interface CreateCaseResponse {
   [key: string]: unknown;
 }
 
-export async function createCase(payload: CreateCasePayload) {
-  return apiRequest<CreateCaseResponse>("CreateCase", {
+export async function createCase(payload: FormData) {
+  return apiFormRequest<CreateCaseResponse>("CreateCase", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
@@ -322,10 +322,10 @@ export interface CreateChangeRequestResponse {
   [key: string]: unknown;
 }
 
-export async function createChangeRequest(payload: CreateChangeRequestPayload) {
-  return apiRequest<CreateChangeRequestResponse>("CreateChangeRequest", {
+export async function createChangeRequest(payload: FormData) {
+  return apiFormRequest<CreateChangeRequestResponse>("CreateChangeRequest", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
@@ -352,10 +352,10 @@ export interface UpdateCaseCommentResponse {
   [key: string]: unknown;
 }
 
-export async function updateCaseComment(payload: UpdateCaseCommentPayload) {
-  return apiRequest<UpdateCaseCommentResponse>("UpdateCaseComment", {
+export async function updateCaseComment(payload: FormData) {
+  return apiFormRequest<UpdateCaseCommentResponse>("UpdateCaseComment", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 

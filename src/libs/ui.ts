@@ -32,6 +32,8 @@ export const ui = {
   formBody: "px-5 pb-4 pt-[18px]",
   attach:
     "flex w-fit cursor-pointer items-center gap-2.5 text-sm font-bold text-text-1",
+  fileInput:
+    "w-full cursor-pointer rounded-lg border-2 border-dashed border-accent/45 bg-[#f4f8ff] px-3 py-3 font-sans text-[13.5px] font-medium text-text-2 outline-none transition-[border-color,background-color] duration-150 hover:border-accent hover:bg-[#ebf3ff] file:mr-3.5 file:cursor-pointer file:rounded-[9px] file:border-0 file:bg-btn-primary file:px-4 file:py-2 file:font-sans file:text-[13.5px] file:font-semibold file:text-white file:shadow-btn",
   tableScrollBody: "max-h-[680px] overflow-y-auto",
 } as const;
 

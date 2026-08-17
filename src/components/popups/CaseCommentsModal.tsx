@@ -2,6 +2,7 @@ import {
   FormNote,
   FormGrid,
   FormField,
+  FormHelp,
   FormLabel,
   FormAttach,
   FormSection,
@@ -28,6 +29,7 @@ export function CaseCommentsModal() {
   const [subject, setSubject] = useState("");
   const open = modal.name === "case-comments";
   const searchRef = useRef<HTMLInputElement>(null);
+  const attachmentRef = useRef<HTMLInputElement>(null);
   const [linkedCase, setLinkedCase] = useState("");
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -110,17 +112,34 @@ export function CaseCommentsModal() {
     event.preventDefault();
     if (submitting || !selectedCase) return;
 
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const attachment = formData.get("attachments");
+
+    if (attachment instanceof File && attachment.size > 0) {
+      if (!attachment.type.startsWith("image/")) {
+        setStatus("Please select an image file only.");
+        return;
+      }
+    }
+
+    const payload = new FormData();
+    payload.append("CaseId", selectedCase.CaseId);
+    payload.append("UserEmail", userEmail);
+    payload.append("CommentSubject", subject);
+    payload.append("CommentDetail", detail);
+
+    if (attachment instanceof File && attachment.size > 0) {
+      payload.append("attachments", attachment);
+    }
+
     setSubmitting(true);
     try {
-      await updateCaseComment({
-        CaseId: selectedCase.CaseId,
-        UserEmail: userEmail,
-        CommentSubject: subject,
-        CommentDetail: detail,
-      });
+      await updateCaseComment(payload);
       setStatus("Comment added successfully");
       setSubject("");
       setDetail("");
+      if (attachmentRef.current) attachmentRef.current.value = "";
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "Failed to add comment"
@@ -242,14 +261,17 @@ export function CaseCommentsModal() {
             </FormField>
             <FormField full>
               <FormAttach htmlFor="comment-attachments">
-                Add comment attachments
+                Add attachment
               </FormAttach>
               <input
+                ref={attachmentRef}
                 id="comment-attachments"
+                name="attachments"
                 type="file"
-                multiple
-                className={ui.fieldControl}
+                accept="image/*"
+                className={ui.fileInput}
               />
+              <FormHelp>One image only (any image type).</FormHelp>
             </FormField>
             {/* <div className="col-span-full grid gap-2.5 rounded-lg border border-border-soft bg-[#f8fafc] p-3">
               {comments.map((comment) => (

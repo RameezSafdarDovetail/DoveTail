@@ -92,16 +92,37 @@ export function LogCaseModal() {
 
     const form = new FormData(event.currentTarget);
     const selectedCategory = String(form.get("category") ?? "");
-    const payload = {
-      Subject: String(form.get("subject") ?? ""),
-      Details: String(form.get("details") ?? ""),
-      AccountId: String(form.get("account") ?? ""),
-      Product: String(form.get("product") ?? ""),
-      CategoryOptionValue: categoryOptionValues[selectedCategory] ?? 0,
-      SubCategory: String(form.get("subcategory") ?? ""),
-      PersonResponsible: String(form.get("personResponsible") ?? ""),
-      ClientReference: String(form.get("clientReference") ?? ""),
-    };
+    const attachment = form.get("attachments");
+
+    if (attachment instanceof File && attachment.size > 0) {
+      if (!attachment.type.startsWith("image/")) {
+        setStatus("Please select an image file only.");
+        return;
+      }
+    }
+
+    const payload = new FormData();
+    payload.append("subject", String(form.get("subject") ?? ""));
+    payload.append("details", String(form.get("details") ?? ""));
+    payload.append("AccountId", String(form.get("account") ?? ""));
+    payload.append("product", String(form.get("product") ?? ""));
+    payload.append(
+      "categoryOptionValue",
+      String(categoryOptionValues[selectedCategory] ?? 0)
+    );
+    payload.append("subcategory", String(form.get("subcategory") ?? ""));
+    payload.append(
+      "personResponsible",
+      String(form.get("personResponsible") ?? "")
+    );
+    payload.append(
+      "clientReference",
+      String(form.get("clientReference") ?? "")
+    );
+
+    if (attachment instanceof File && attachment.size > 0) {
+      payload.append("attachments", attachment);
+    }
 
     setSubmitting(true);
     try {
@@ -315,15 +336,16 @@ export function LogCaseModal() {
                 className="flex w-fit cursor-pointer items-center gap-2.5 text-sm font-bold text-text-1"
               >
                 <span className="text-lg text-text-1">+</span>
-                Add attachments
+                Add attachment
               </label>
               <input
                 id="case-attachments"
                 name="attachments"
                 type="file"
-                multiple
-                className={ui.fieldControlWhite}
+                accept="image/*"
+                className={ui.fileInput}
               />
+              <FormHelp>One image only (any image type).</FormHelp>
             </FormField>
           </FormGrid>
         </div>

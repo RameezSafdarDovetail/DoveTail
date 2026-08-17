@@ -107,18 +107,41 @@ export function ChangeRequestModal() {
     if (submitting) return;
 
     const form = new FormData(event.currentTarget);
-    const payload = {
-      LinkedCaseNumber: String(form.get("linkedCase") ?? ""),
-      ChangeTitle: String(form.get("changeTitle") ?? ""),
-      Details: String(form.get("details") ?? ""),
-      ImpactedAreas: String(form.get("impacted") ?? ""),
-      SupportingDocumentOptionValues: form
-        .getAll("supportingDocs")
-        .map((value) => Number(value))
-        .filter((value) => Number.isFinite(value) && value > 0),
-      CurrentProcess: String(form.get("currentProcess") ?? ""),
-      Justification: String(form.get("justification") ?? ""),
-    };
+    const attachment = form.get("attachments");
+
+    if (!selectedCase?.CaseId) {
+      setStatus("Please select a case.");
+      return;
+    }
+
+    if (attachment instanceof File && attachment.size > 0) {
+      if (!attachment.type.startsWith("image/")) {
+        setStatus("Please select an image file only.");
+        return;
+      }
+    }
+
+    const payload = new FormData();
+    payload.append("CaseId", selectedCase.CaseId);
+    payload.append("linkedCase", selectedCase.CaseNumber);
+    payload.append("changeTitle", String(form.get("changeTitle") ?? ""));
+    payload.append("details", String(form.get("details") ?? ""));
+    payload.append("ImpactedAreas", String(form.get("impacted") ?? ""));
+    payload.append("currentProcess", String(form.get("currentProcess") ?? ""));
+    payload.append("justification", String(form.get("justification") ?? ""));
+
+    form
+      .getAll("supportingDocs")
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .forEach((value) => {
+        payload.append("SupportingDocumentOptionValues", String(value));
+      });
+
+    if (attachment instanceof File && attachment.size > 0) {
+      payload.append("attachments", attachment);
+    }
+
     setSubmitting(true);
     try {
       await createChangeRequest(payload);
@@ -299,16 +322,15 @@ export function ChangeRequestModal() {
               />
             </FormField>
             <FormField full>
-              <FormAttach htmlFor="cr-attachments">
-                Add supporting attachments
-              </FormAttach>
+              <FormAttach htmlFor="cr-attachments">Add attachment</FormAttach>
               <input
                 id="cr-attachments"
                 name="attachments"
                 type="file"
-                multiple
-                className={ui.fieldControl}
+                accept="image/*"
+                className={ui.fileInput}
               />
+              <FormHelp>One image only (any image type).</FormHelp>
             </FormField>
             <FormField full>
               <FormLabel htmlFor="cr-current-process" required>

@@ -23,6 +23,25 @@ export async function apiRequest<T>(
     },
   });
 
+  return parseApiResponse<T>(response);
+}
+
+export async function apiFormRequest<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const response = await fetch(apiUrl(path), {
+    ...options,
+    headers: {
+      // ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+
+  return parseApiResponse<T>(response);
+}
+
+async function parseApiResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
 
   if (!response.ok) {
