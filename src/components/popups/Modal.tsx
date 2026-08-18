@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ui } from "../../libs/ui";
 
 interface ModalProps {
@@ -18,7 +19,7 @@ export function Modal({
 }: ModalProps) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[500] grid place-items-center bg-[rgba(1,12,42,0.58)] p-6 backdrop-blur-[10px] max-[640px]:items-start max-[640px]:p-3"
       aria-hidden="false"
@@ -35,7 +36,8 @@ export function Modal({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

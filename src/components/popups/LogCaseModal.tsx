@@ -12,11 +12,8 @@ import {
   FormField,
   FormSection,
 } from "./FormPrimitives";
-import {
-  createCase,
-  getActiveAccounts,
-  type ActiveAccount,
-} from "../../apis/getActiveCases";
+import { createCase } from "../../apis/cases";
+import { getActiveAccounts, type ActiveAccount } from "../../apis/accounts";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";

@@ -7,11 +7,11 @@ import {
   FormAttach,
   FormSection,
 } from "./FormPrimitives";
+import { updateCaseComment } from "../../apis/comments";
 import {
-  updateCaseComment,
   getCaseChangeRequestInfo,
   type CaseChangeRequestInfo,
-} from "../../apis/getActiveCases";
+} from "../../apis/changeRequests";
 import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useAuth } from "../../hooks/useAuth";

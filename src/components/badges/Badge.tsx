@@ -1,6 +1,6 @@
 import { cn } from '../../libs/utils';
 
-type BadgeTone = 'open' | 'pending' | 'closed' | 'resolved' | 'approved' | 'awaiting';
+type BadgeTone = 'open' | 'pending' | 'closed' | 'resolved' | 'approved' | 'awaiting' | 'rejected' | 'cancelled';
 
 interface BadgeProps {
   tone: BadgeTone;
@@ -15,6 +15,8 @@ const tones: Record<BadgeTone, string> = {
   resolved: 'bg-green-bg text-green',
   approved: 'bg-green-bg text-green',
   awaiting: 'bg-accent-soft text-accent',
+  rejected: 'bg-red-bg text-red',
+  cancelled: 'bg-amber-bg text-amber',
 };
 
 const dots: Record<BadgeTone, string> = {
@@ -24,6 +26,8 @@ const dots: Record<BadgeTone, string> = {
   resolved: 'bg-green',
   approved: 'bg-green',
   awaiting: 'bg-accent',
+  rejected: 'bg-red',
+  cancelled: 'bg-amber',
 };
 
 export function Badge({ tone, children, withDot = false }: BadgeProps) {

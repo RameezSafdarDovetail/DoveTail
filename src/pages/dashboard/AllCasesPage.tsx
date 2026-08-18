@@ -6,7 +6,7 @@ import {
   mapCatalogStatus,
   matchesCaseSearch,
   mapCatalogStatusLabel,
-} from "../../apis/getActiveCases";
+} from "../../apis/cases";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { cn, pluralize } from "../../libs/utils";

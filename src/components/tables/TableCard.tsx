@@ -25,7 +25,10 @@ export function TableCard({
           {headers.map((header) => (
             <span
               key={header}
-              className="text-[11px] font-bold tracking-[0.06em] text-text-3 uppercase"
+              className={cn(
+                "text-[11px] font-bold tracking-[0.06em] text-text-3 uppercase",
+                header === "Actions" && "justify-self-center text-center"
+              )}
             >
               {header}
             </span>

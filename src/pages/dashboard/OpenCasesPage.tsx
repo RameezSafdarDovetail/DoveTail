@@ -7,7 +7,7 @@ import {
   mapPriorityLabel,
   matchesCaseSearch,
   mapCatalogStatusLabel,
-} from "../../apis/getActiveCases";
+} from "../../apis/cases";
 import { Plus } from "lucide-react";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";

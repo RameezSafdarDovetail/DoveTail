@@ -6,7 +6,7 @@ import {
   type ActiveCase,
   mapPriorityLabel,
   buildDashboardStats,
-} from "../../apis/getActiveCases";
+} from "../../apis/cases";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { useAuth } from "../../hooks/useAuth";

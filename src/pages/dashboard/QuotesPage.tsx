@@ -1,14 +1,17 @@
+import { formatCaseDate } from "../../apis/cases";
 import {
   getQuotes,
-  formatCaseDate,
   type QuoteItem,
   mapQuoteStatusTone,
-} from "../../apis/getActiveCases";
+} from "../../apis/quotes";
+import {
+  QuoteActionModal,
+  type QuoteActionState,
+} from "../../components/popups/QuoteActionModal";
+import { ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
-import { tableCols, ui } from "../../libs/ui";
 import { cn, pluralize } from "../../libs/utils";
 import { Pill } from "../../components/badges/Pill";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
@@ -17,6 +20,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const quoteStatusOptions = [
   { id: "quoting-in-progress", label: "Quoting In Progress" },
@@ -27,12 +31,29 @@ const quoteStatusOptions = [
 
 type QuoteStatusFilter = (typeof quoteStatusOptions)[number]["id"] | "all";
 
+const quoteTableCols =
+  "grid-cols-[124px_minmax(0,1.15fr)_86px_minmax(180px,220px)_minmax(0,0.55fr)_64px_minmax(158px,184px)] gap-x-2 max-[640px]:min-w-[1080px]";
+
 function matchesQuoteStatus(status: string, filter: QuoteStatusFilter) {
   if (filter === "all") return true;
   const value = status.toLowerCase();
   const selected = quoteStatusOptions.find((option) => option.id === filter);
   if (!selected) return true;
   return value.includes(selected.label.toLowerCase());
+}
+
+function shouldHideQuoteActions(status: string) {
+  const value = status.trim().toLowerCase();
+  return (
+    value === "quote accepted" ||
+    value === "qoute accepted" ||
+    value === "quote rejected" ||
+    value === "qoute rejected" ||
+    value === "quote cancelled" ||
+    value === "quote canceled" ||
+    value === "qoute cancelled" ||
+    value === "qoute canceled"
+  );
 }
 
 export function QuotesPage() {
@@ -43,14 +64,13 @@ export function QuotesPage() {
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [statusFilter, setStatusFilter] = useState<QuoteStatusFilter>("all");
   const [statusOpen, setStatusOpen] = useState(false);
+  const [actionModal, setActionModal] = useState<QuoteActionState | null>(null);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadQuotes() {
+  const loadQuotes = useCallback(
+    async (options?: { silent?: boolean }) => {
       if (!contactId) {
         setQuotes([]);
         setError("Missing contact id. Please sign in again.");
@@ -58,27 +78,27 @@ export function QuotesPage() {
         return;
       }
 
-      setLoading(true);
-      setError("");
+      if (!options?.silent) {
+        setLoading(true);
+        setError("");
+      }
+
       try {
         const data = await getQuotes(contactId);
-        if (!cancelled) setQuotes(data);
+        setQuotes(data);
+        setError("");
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load quotes"
-          );
-        }
+        setError(err instanceof Error ? err.message : "Failed to load quotes");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    }
+    },
+    [contactId]
+  );
 
+  useEffect(() => {
     void loadQuotes();
-    return () => {
-      cancelled = true;
-    };
-  }, [contactId]);
+  }, [loadQuotes]);
 
   useEffect(() => {
     if (!statusOpen) return;
@@ -104,8 +124,9 @@ export function QuotesPage() {
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     return quotes.filter((item) => {
+      const statusText = item.Status ?? "";
       const matchesStatus =
-        scope === "all" || matchesQuoteStatus(item.Status, statusFilter);
+        scope === "all" || matchesQuoteStatus(statusText, statusFilter);
       if (!matchesStatus) return false;
       if (!term) return true;
       const title = item.Title ?? "";
@@ -116,10 +137,18 @@ export function QuotesPage() {
         title.toLowerCase().includes(term) ||
         product.toLowerCase().includes(term) ||
         subject.toLowerCase().includes(term) ||
-        item.Status.toLowerCase().includes(term)
+        statusText.toLowerCase().includes(term)
       );
     });
   }, [query, quotes, scope, statusFilter]);
+
+  function openActionModal(type: QuoteActionState["type"], quote: QuoteItem) {
+    setActionModal({ type, quote });
+  }
+
+  function closeActionModal() {
+    setActionModal(null);
+  }
 
   return (
     <div className={ui.view}>
@@ -220,8 +249,16 @@ export function QuotesPage() {
         </div>
 
         <TableCard
-          columnsClassName={tableCols.quotes}
-          headers={["Quote #", "Title", "Product", "Subject", "Status", "Date"]}
+          columnsClassName={quoteTableCols}
+          headers={[
+            "Quote #",
+            "Title",
+            "Product",
+            "Status",
+            "Subject",
+            "Date",
+            "Actions",
+          ]}
         >
           {loading ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
@@ -240,9 +277,11 @@ export function QuotesPage() {
             const title = item.Title || "Untitled quote";
             const product = item.Product || "—";
             const subject = item.Subject || "—";
+            const statusText = item.Status ?? "";
+            const showActions = !shouldHideQuoteActions(statusText);
 
             return (
-              <TableRow key={item.Id} columnsClassName={tableCols.quotes}>
+              <TableRow key={item.Id} columnsClassName={quoteTableCols}>
                 <span
                   className={cn(ui.caseNum, "min-w-0 truncate")}
                   title={item.QuoteNumber}
@@ -260,24 +299,52 @@ export function QuotesPage() {
                 <div className="min-w-0">
                   <Pill>{product}</Pill>
                 </div>
+                <div className="min-w-0 overflow-hidden">
+                  <Badge tone={mapQuoteStatusTone(statusText)}>
+                    {statusText || "—"}
+                  </Badge>
+                </div>
                 <span
                   className="min-w-0 truncate text-[12.5px] text-text-2"
                   title={subject}
                 >
                   {subject}
                 </span>
-                <div className="min-w-0 overflow-hidden">
-                  <Badge tone={mapQuoteStatusTone(item.Status)}>
-                    {item.Status}
-                  </Badge>
-                </div>
                 <span className="whitespace-nowrap text-xs text-text-3">
                   {formatCaseDate(item.CreatedOn)}
                 </span>
+                <div className="flex items-center justify-end gap-1.5">
+                  {showActions ? (
+                    <>
+                      <button
+                        type="button"
+                        className="cursor-pointer rounded-md border border-[#2f7b32] bg-[#34a853] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                        onClick={() => openActionModal("accept", item)}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="cursor-pointer rounded-md border border-[#b3261e] bg-[#d93025] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                        onClick={() => openActionModal("reject", item)}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : null}
+                </div>
               </TableRow>
             );
           })}
         </TableCard>
+
+        <QuoteActionModal
+          action={actionModal}
+          onClose={closeActionModal}
+          onSuccess={() => {
+            void loadQuotes({ silent: true });
+          }}
+        />
       </PageBody>
     </div>
   );

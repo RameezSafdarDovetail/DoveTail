@@ -11,7 +11,7 @@ import {
   createChangeRequest,
   getCaseChangeRequestInfo,
   type CaseChangeRequestInfo,
-} from "../../apis/getActiveCases";
+} from "../../apis/changeRequests";
 import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useModal } from "../../hooks/useModal";
