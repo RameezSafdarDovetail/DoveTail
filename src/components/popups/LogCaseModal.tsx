@@ -22,6 +22,12 @@ import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
+const priorityOptions = [
+  { value: 1, label: "P1 High Priority Call" },
+  { value: 2, label: "P2 Normal Priority Call" },
+  { value: 3, label: "P3 Low Priority Call" },
+] as const;
+
 export function LogCaseModal() {
   const { user } = useAuth();
   const { modal, closeModal } = useModal();
@@ -116,6 +122,7 @@ export function LogCaseModal() {
       "clientReference",
       String(form.get("clientReference") ?? "")
     );
+    payload.append("priorityCode", String(form.get("priorityCode") ?? ""));
 
     if (attachment instanceof File && attachment.size > 0) {
       payload.append("attachments", attachment);
@@ -276,7 +283,7 @@ export function LogCaseModal() {
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-subcategory" required>
-                Subject
+                Subcategory
               </FormLabel>
               <select
                 id="case-subcategory"
@@ -299,6 +306,25 @@ export function LogCaseModal() {
                 ))}
               </select>
               <FormHelp>Enabled after a category is selected.</FormHelp>
+            </FormField>
+            <FormField>
+              <FormLabel htmlFor="case-priority" required>
+                Priority
+              </FormLabel>
+              <select
+                id="case-priority"
+                name="priorityCode"
+                required
+                defaultValue=""
+                className={cn(ui.fieldControlWhite, "cursor-pointer")}
+              >
+                <option value="">-- Select priority --</option>
+                {priorityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </FormField>
 
             <FormSection>Case Detail</FormSection>
