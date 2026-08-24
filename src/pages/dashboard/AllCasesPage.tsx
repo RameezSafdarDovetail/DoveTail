@@ -1,7 +1,5 @@
 import {
-  getAllCases,
   formatCaseDate,
-  type ActiveCase,
   mapPriorityType,
   mapCatalogStatus,
   matchesCaseSearch,
@@ -12,7 +10,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Pill } from "../../components/badges/Pill";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
 import { TabPill } from "../../components/buttons/TabPill";
@@ -21,6 +19,7 @@ import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 
 type CaseStatus = "open" | "pending" | "closed";
 
@@ -38,40 +37,17 @@ export function AllCasesPage() {
   const status = (params.get("status") as CaseStatus | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
   const searchBy = params.get("by");
-  const [cases, setCases] = useState<ActiveCase[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: cases = [], isLoading, isError, error } = useCasesQuery();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCases() {
-      if (!contactId) {
-        setCases([]);
-        setError("Missing contact id. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getAllCases(contactId);
-        if (!cancelled) setCases(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load cases");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadCases();
-    return () => {
-      cancelled = true;
-    };
-  }, [contactId]);
+  const missingContactId = !contactId;
+  const loading = !missingContactId && isLoading;
+  const errorMessage = missingContactId
+    ? "Missing contact id. Please sign in again."
+    : isError
+      ? error instanceof Error
+        ? error.message
+        : "Failed to load cases"
+      : "";
 
   const visible = useMemo(() => {
     return cases.filter((item) => {
@@ -156,10 +132,10 @@ export function AllCasesPage() {
               Loading cases…
             </div>
           ) : null}
-          {error ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{error}</div>
+          {errorMessage ? (
+            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
           ) : null}
-          {!loading && !error && visible.length === 0 ? (
+          {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
               No cases found.
             </div>
@@ -215,8 +191,8 @@ export function AllCasesPage() {
                       catalogStatus === "open"
                         ? "open"
                         : catalogStatus === "pending"
-                        ? "pending"
-                        : "closed"
+                          ? "pending"
+                          : "closed"
                     }
                     withDot
                   >

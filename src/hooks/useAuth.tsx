@@ -1,19 +1,20 @@
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
   useMemo,
   useState,
+  useEffect,
+  useContext,
+  useCallback,
+  createContext,
   type ReactNode,
 } from "react";
 import {
-  clearAuthSession,
   isAuthUser,
   readAuthSession,
   writeAuthSession,
+  clearAuthSession,
   type AuthUser,
 } from "../libs/authSession";
+import { queryClient } from "../libs/queryClient";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -31,8 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isAuthUser(session)) {
       clearAuthSession();
       setUser(null);
+      queryClient.clear();
       throw new Error("Login did not return a valid session.");
     }
+    // Drop any previous user's cached queries before loading the new session.
+    queryClient.clear();
     writeAuthSession(session);
     setUser(session);
   }, []);
@@ -40,12 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearAuthSession();
     setUser(null);
+    queryClient.clear();
   }, []);
 
   useEffect(() => {
     function syncSession() {
       const session = readAuthSession();
-      setUser(session);
+      setUser((current) => {
+        const nextId = session?.ContactId ?? null;
+        const currentId = current?.ContactId ?? null;
+        if (nextId !== currentId) {
+          queryClient.clear();
+        }
+        return session;
+      });
     }
 
     function onStorage(event: StorageEvent) {

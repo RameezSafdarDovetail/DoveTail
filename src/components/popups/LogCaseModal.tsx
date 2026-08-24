@@ -12,14 +12,14 @@ import {
   FormField,
   FormSection,
 } from "./FormPrimitives";
-import { createCase } from "../../apis/cases";
-import { getActiveAccounts, type ActiveAccount } from "../../apis/accounts";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
+import { createCase } from "../../apis/cases";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
+import { getActiveAccounts, type ActiveAccount } from "../../apis/accounts";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 const priorityOptions = [

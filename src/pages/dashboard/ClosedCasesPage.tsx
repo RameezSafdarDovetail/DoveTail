@@ -1,15 +1,14 @@
 import {
-  getAllCases,
   formatCaseDate,
   mapPriorityType,
-  type ActiveCase,
   mapCatalogStatusLabel,
+  isProblemSolvedStatus,
 } from "../../apis/cases";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { cn, pluralize } from "../../libs/utils";
 import { Pill } from "../../components/badges/Pill";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
@@ -18,53 +17,29 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
-
-function isProblemSolved(status: string) {
-  return status.toLowerCase().includes("problem solved");
-}
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 
 export function ClosedCasesPage() {
   const { user } = useAuth();
   const contactId = user?.ContactId ?? "";
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<"mine" | "all">("mine");
-  const [cases, setCases] = useState<ActiveCase[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
-  useEffect(() => {
-    let cancelled = false;
+  const missingContactId = !contactId;
+  const loading = !missingContactId && isLoading;
+  const errorMessage = missingContactId
+    ? "Missing contact id. Please sign in again."
+    : isError
+      ? error instanceof Error
+        ? error.message
+        : "Failed to load closed cases"
+      : "";
 
-    async function loadCases() {
-      if (!contactId) {
-        setCases([]);
-        setError("Missing contact id. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getAllCases(contactId);
-        if (!cancelled)
-          setCases(data.filter((item) => isProblemSolved(item.Status)));
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load closed cases"
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadCases();
-    return () => {
-      cancelled = true;
-    };
-  }, [contactId]);
+  const cases = useMemo(
+    () => allCases.filter((item) => isProblemSolvedStatus(item.Status)),
+    [allCases]
+  );
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -157,10 +132,10 @@ export function ClosedCasesPage() {
               Loading closed cases…
             </div>
           ) : null}
-          {error ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{error}</div>
+          {errorMessage ? (
+            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
           ) : null}
-          {!loading && !error && visible.length === 0 ? (
+          {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
               No closed cases found.
             </div>

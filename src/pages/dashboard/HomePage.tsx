@@ -2,19 +2,19 @@ import {
   mapSla,
   mapStatus,
   mapPriority,
-  getActiveCases,
-  type ActiveCase,
   mapPriorityLabel,
   buildDashboardStats,
+  isProblemSolvedStatus,
 } from "../../apis/cases";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
+import { useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { Hero } from "../../components/hero/Hero";
-import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/buttons/Button";
 import { SlaChip } from "../../components/badges/SlaChip";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 import { StatCard } from "../../components/cards/StatCard";
 import { PageBody } from "../../components/layout/PageBody";
 import { StatusChip } from "../../components/badges/StatusChip";
@@ -29,42 +29,22 @@ export function HomePage() {
   const contactId = user?.ContactId ?? "";
   const { openCaseComments } = useModal();
   const [priority, setPriority] = useState<CasePriority | "all">("all");
-  const [cases, setCases] = useState<ActiveCase[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
-  useEffect(() => {
-    let cancelled = false;
+  const missingContactId = !contactId;
+  const loading = !missingContactId && isLoading;
+  const errorMessage = missingContactId
+    ? "Missing contact id. Please sign in again."
+    : isError
+    ? error instanceof Error
+      ? error.message
+      : "Failed to load active cases"
+    : "";
 
-    async function loadCases() {
-      if (!contactId) {
-        setCases([]);
-        setError("Missing contact id. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getActiveCases(contactId);
-        if (!cancelled) setCases(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load active cases"
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadCases();
-    return () => {
-      cancelled = true;
-    };
-  }, [contactId]);
+  const cases = useMemo(
+    () => allCases.filter((item) => !isProblemSolvedStatus(item.Status)),
+    [allCases]
+  );
 
   const visibleCases = useMemo(() => {
     if (priority === "all") return cases;
@@ -143,12 +123,12 @@ export function HomePage() {
                     Loading active cases…
                   </div>
                 ) : null}
-                {error ? (
+                {errorMessage ? (
                   <div className="px-[18px] py-4 text-[12.5px] text-red">
-                    {error}
+                    {errorMessage}
                   </div>
                 ) : null}
-                {!loading && !error && visibleCases.length === 0 ? (
+                {!loading && !errorMessage && visibleCases.length === 0 ? (
                   <div className="px-[18px] py-4 text-[12.5px] text-text-3">
                     No active cases found.
                   </div>

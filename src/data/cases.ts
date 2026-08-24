@@ -348,9 +348,20 @@ export const categoryOptions: Record<string, string[]> = {
 
 export const categories = Object.keys(categoryOptions);
 
-export const categoryOptionValues: Record<string, number> = Object.fromEntries(
-  categories.map((name, index) => [name, index + 1])
-);
+export const categoryOptionValues: Record<string, number> = {
+  "User Access & Security": 5,
+  "Orders & Waybills": 6,
+  "Status & Tracking": 7,
+  "Interfaces & Integrations": 8,
+  "Documents & eDocs": 9,
+  "Rating, Charges & Pricing": 10,
+  Reports: 11,
+  "Data & Configuration": 12,
+  "System Error / Application Issue": 13,
+  "Manifest & Operational Processing": 14,
+  "Change Request / Enhancement": 15,
+  "General Support & How-To": 16,
+};
 
 export const environments = ["Production", "UAT"];
 

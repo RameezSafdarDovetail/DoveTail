@@ -1,12 +1,11 @@
 import {
   mapSla,
   mapPriority,
-  getActiveCases,
-  type ActiveCase,
   mapCatalogStatus,
   mapPriorityLabel,
   matchesCaseSearch,
   mapCatalogStatusLabel,
+  isProblemSolvedStatus,
 } from "../../apis/cases";
 import { Plus } from "lucide-react";
 import { tableCols, ui } from "../../libs/ui";
@@ -15,7 +14,7 @@ import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/badges/Badge";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Button } from "../../components/buttons/Button";
 import { SlaChip } from "../../components/badges/SlaChip";
 import { PageBody } from "../../components/layout/PageBody";
@@ -25,6 +24,7 @@ import { SearchInput } from "../../components/layout/SearchInput";
 import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { PriorityFilter } from "../../components/buttons/PriorityFilter";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 
 type CasePriority = "p1" | "p2" | "p3";
 
@@ -47,50 +47,26 @@ export function OpenCasesPage() {
     (params.get("priority") as CasePriority | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
   const searchBy = params.get("by");
-  const [cases, setCases] = useState<ActiveCase[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCases() {
-      if (!contactId) {
-        setCases([]);
-        setError("Missing contact id. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getActiveCases(contactId);
-        if (!cancelled) setCases(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load open cases"
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadCases();
-    return () => {
-      cancelled = true;
-    };
-  }, [contactId]);
+  const missingContactId = !contactId;
+  const loading = !missingContactId && isLoading;
+  const errorMessage = missingContactId
+    ? "Missing contact id. Please sign in again."
+    : isError
+      ? error instanceof Error
+        ? error.message
+        : "Failed to load open cases"
+      : "";
 
   const visible = useMemo(() => {
-    return cases.filter((item) => {
+    return allCases.filter((item) => {
+      if (isProblemSolvedStatus(item.Status)) return false;
       const casePriority = mapPriority(item.Priority);
       const matchesPriority = priority === "all" || casePriority === priority;
       return matchesPriority && matchesCaseSearch(item, query, searchBy);
     });
-  }, [cases, priority, query, searchBy]);
+  }, [allCases, priority, query, searchBy]);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params);
@@ -179,10 +155,10 @@ export function OpenCasesPage() {
               Loading open cases…
             </div>
           ) : null}
-          {error ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{error}</div>
+          {errorMessage ? (
+            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
           ) : null}
-          {!loading && !error && visible.length === 0 ? (
+          {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
               No open cases found.
             </div>
@@ -218,8 +194,8 @@ export function OpenCasesPage() {
                       catalogStatus === "open"
                         ? "open"
                         : catalogStatus === "pending"
-                        ? "pending"
-                        : "closed"
+                          ? "pending"
+                          : "closed"
                     }
                     withDot
                   >

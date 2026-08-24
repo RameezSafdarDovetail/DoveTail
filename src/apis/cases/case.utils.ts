@@ -46,3 +46,8 @@ export function formatCaseDate(iso: string) {
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
+
+/** Matches statuses like "84 Problem Solved". */
+export function isProblemSolvedStatus(status: string) {
+  return status.trim().toLowerCase().includes("problem solved");
+}
