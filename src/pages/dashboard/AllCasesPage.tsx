@@ -7,6 +7,7 @@ import {
 } from "../../apis/cases";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
+import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Pill } from "../../components/badges/Pill";
@@ -32,6 +33,7 @@ const tabs: Array<{ id: CaseStatus | "all"; label: string }> = [
 
 export function AllCasesPage() {
   const { user } = useAuth();
+  const { openCaseDetail } = useModal();
   const contactId = user?.ContactId ?? "";
   const [params, setParams] = useSearchParams();
   const status = (params.get("status") as CaseStatus | "all" | null) ?? "all";
@@ -152,6 +154,7 @@ export function AllCasesPage() {
                 key={item.Id}
                 columnsClassName={tableCols.casesAll}
                 muted={muted}
+                onClick={() => openCaseDetail(item.Id)}
               >
                 <span
                   className={cn(

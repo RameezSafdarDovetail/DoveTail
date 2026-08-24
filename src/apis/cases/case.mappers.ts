@@ -4,6 +4,27 @@ import type {
   CasePriority,
   HomeStatusTone,
 } from "../../data/cases";
+import { categoryOptionValues } from "../../data/cases";
+
+const categoryCodeLabels = Object.fromEntries(
+  Object.entries(categoryOptionValues).map(([label, value]) => [value, label])
+) as Record<number, string>;
+
+const priorityCodeLabels: Record<number, string> = {
+  1: "P1 High Priority Call",
+  2: "P2 Normal Priority Call",
+  3: "P3 Low Priority Call",
+};
+
+export function mapCategoryCodeLabel(code: number | null | undefined) {
+  if (code == null) return "—";
+  return categoryCodeLabels[code] ?? String(code);
+}
+
+export function mapPriorityCodeLabel(code: number | null | undefined) {
+  if (code == null) return "—";
+  return priorityCodeLabels[code] ?? String(code);
+}
 
 export function mapPriority(priority: string): CasePriority {
   const value = priority.toLowerCase();

@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useEscapeKey } from './useEscapeKey';
 
-export type ModalName = 'log-case' | 'change-request' | 'case-comments';
+export type ModalName = 'log-case' | 'change-request' | 'case-comments' | 'case-detail';
 
 interface ModalState {
   name: ModalName | null;
   caseNumber?: string;
+  caseId?: string;
 }
 
 interface ModalContextValue {
@@ -13,6 +14,7 @@ interface ModalContextValue {
   openLogCase: () => void;
   openChangeRequest: (caseNumber?: string) => void;
   openCaseComments: (caseNumber?: string) => void;
+  openCaseDetail: (caseId: string) => void;
   closeModal: () => void;
 }
 
@@ -31,12 +33,23 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     (caseNumber?: string) => setModal({ name: 'case-comments', caseNumber }),
     [],
   );
+  const openCaseDetail = useCallback(
+    (caseId: string) => setModal({ name: 'case-detail', caseId }),
+    [],
+  );
 
   useEscapeKey(closeModal, Boolean(modal.name));
 
   const value = useMemo(
-    () => ({ modal, openLogCase, openChangeRequest, openCaseComments, closeModal }),
-    [modal, openLogCase, openChangeRequest, openCaseComments, closeModal],
+    () => ({
+      modal,
+      openLogCase,
+      openChangeRequest,
+      openCaseComments,
+      openCaseDetail,
+      closeModal,
+    }),
+    [modal, openLogCase, openChangeRequest, openCaseComments, openCaseDetail, closeModal],
   );
 
   return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;

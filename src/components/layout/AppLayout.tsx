@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Footer } from '../footer/Footer';
 import { TopNav } from '../header/TopNav';
 import { CaseCommentsModal } from '../popups/CaseCommentsModal';
+import { CaseDetailModal } from '../popups/CaseDetailModal';
 import { ChangeRequestModal } from '../popups/ChangeRequestModal';
 import { LogCaseModal } from '../popups/LogCaseModal';
 import { Sidebar } from '../sidebar/Sidebar';
@@ -27,6 +28,7 @@ export function AppLayout() {
       <LogCaseModal />
       <ChangeRequestModal />
       <CaseCommentsModal />
+      <CaseDetailModal />
     </>
   );
 }

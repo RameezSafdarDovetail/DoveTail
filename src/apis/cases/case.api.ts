@@ -1,5 +1,9 @@
 import { apiRequest, apiFormRequest } from "../index";
-import type { ActiveCase, CreateCaseResponse } from "./case.types";
+import type {
+  ActiveCase,
+  CaseDetail,
+  CreateCaseResponse,
+} from "./case.types";
 
 export async function getActiveCases(contactId: string) {
   const params = new URLSearchParams({ contactId });
@@ -19,5 +23,11 @@ export async function createCase(payload: FormData) {
   return apiFormRequest<CreateCaseResponse>("CreateCase", {
     method: "POST",
     body: payload,
+  });
+}
+
+export async function getCaseDetailByID(caseId: string) {
+  return apiRequest<CaseDetail>(`GetCaseDetail/${encodeURIComponent(caseId)}`, {
+    method: "GET",
   });
 }

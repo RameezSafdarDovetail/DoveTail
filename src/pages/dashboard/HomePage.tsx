@@ -27,7 +27,7 @@ type CasePriority = "p1" | "p2" | "p3";
 export function HomePage() {
   const { user } = useAuth();
   const contactId = user?.ContactId ?? "";
-  const { openCaseComments } = useModal();
+  const { openCaseComments, openCaseDetail } = useModal();
   const [priority, setPriority] = useState<CasePriority | "all">("all");
   const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
@@ -141,7 +141,8 @@ export function HomePage() {
                   return (
                     <div
                       key={item.Id}
-                      className="grid grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px]"
+                      className="grid cursor-pointer grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px] hover:bg-glass-hover"
+                      onClick={() => openCaseDetail(item.Id)}
                     >
                       <span>
                         <PriorityBadge priority={casePriority}>

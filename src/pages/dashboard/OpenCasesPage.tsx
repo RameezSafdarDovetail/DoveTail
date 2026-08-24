@@ -41,7 +41,7 @@ const priorities: Array<{
 export function OpenCasesPage() {
   const { user } = useAuth();
   const contactId = user?.ContactId ?? "";
-  const { openLogCase } = useModal();
+  const { openLogCase, openCaseDetail } = useModal();
   const [params, setParams] = useSearchParams();
   const priority =
     (params.get("priority") as CasePriority | "all" | null) ?? "all";
@@ -170,7 +170,11 @@ export function OpenCasesPage() {
             const title = item.Title || "Untitled case";
 
             return (
-              <TableRow key={item.Id} columnsClassName={tableCols.cases}>
+              <TableRow
+                key={item.Id}
+                columnsClassName={tableCols.cases}
+                onClick={() => openCaseDetail(item.Id)}
+              >
                 <span
                   className={cn(ui.caseNum, "min-w-0 truncate")}
                   title={item.CaseNumber}

@@ -6,6 +6,7 @@ import {
 } from "../../apis/cases";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
+import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { Pill } from "../../components/badges/Pill";
 import { useMemo, useState } from "react";
@@ -21,6 +22,7 @@ import { useCasesQuery } from "../../hooks/useCasesQuery";
 
 export function ClosedCasesPage() {
   const { user } = useAuth();
+  const { openCaseDetail } = useModal();
   const contactId = user?.ContactId ?? "";
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<"mine" | "all">("mine");
@@ -146,7 +148,12 @@ export function ClosedCasesPage() {
             const resolution = mapCatalogStatusLabel(item.Status);
 
             return (
-              <TableRow key={item.Id} columnsClassName={tableCols.closed} muted>
+              <TableRow
+                key={item.Id}
+                columnsClassName={tableCols.closed}
+                muted
+                onClick={() => openCaseDetail(item.Id)}
+              >
                 <span
                   className={cn(ui.caseNumDim, "min-w-0 truncate")}
                   title={item.CaseNumber}
