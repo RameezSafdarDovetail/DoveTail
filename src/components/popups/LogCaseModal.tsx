@@ -1,5 +1,4 @@
 import {
-  products,
   categories,
   environments,
   categoryOptions,
@@ -19,7 +18,12 @@ import { createCase } from "../../apis/cases";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
-import { getActiveAccounts, type ActiveAccount } from "../../apis/accounts";
+import {
+  getActiveAccounts,
+  getCustomerProduct,
+  type ActiveAccount,
+  type CustomerProduct,
+} from "../../apis/accounts";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 const priorityOptions = [
@@ -33,6 +37,7 @@ export function LogCaseModal() {
   const { modal, closeModal } = useModal();
   const open = modal.name === "log-case";
   const userEmail = user?.Email ?? "";
+  const contactId = user?.ContactId ?? "";
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
@@ -40,6 +45,9 @@ export function LogCaseModal() {
   const [accounts, setAccounts] = useState<ActiveAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
   const [accountsLoading, setAccountsLoading] = useState(false);
+  const [products, setProducts] = useState<CustomerProduct[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [productsLoading, setProductsLoading] = useState(false);
   const [personResponsible, setPersonResponsible] = useState(userEmail);
   const responsibleRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +63,7 @@ export function LogCaseModal() {
     setSubcategory("");
     setSubmitting(false);
     setSelectedAccount("");
+    setSelectedProduct("");
     setPersonResponsible(userEmail);
 
     let cancelled = false;
@@ -80,14 +89,44 @@ export function LogCaseModal() {
       }
     }
 
+    async function loadProducts() {
+      if (!contactId) {
+        setProducts([]);
+        setSelectedProduct("");
+        setProductsLoading(false);
+        setStatus("Missing contact id. Please sign in again.");
+        return;
+      }
+
+      setProductsLoading(true);
+      try {
+        const data = await getCustomerProduct(contactId);
+        if (!cancelled) {
+          setProducts(data);
+          setSelectedProduct(data[0]?.ProductName ?? "");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setProducts([]);
+          setSelectedProduct("");
+          setStatus(
+            error instanceof Error ? error.message : "Failed to load products"
+          );
+        }
+      } finally {
+        if (!cancelled) setProductsLoading(false);
+      }
+    }
+
     void loadAccounts();
+    void loadProducts();
 
     const timer = window.setTimeout(() => responsibleRef.current?.focus(), 40);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, userEmail]);
+  }, [open, userEmail, contactId]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -231,13 +270,28 @@ export function LogCaseModal() {
                 id="case-product"
                 name="product"
                 required
-                defaultValue=""
+                disabled={productsLoading || products.length === 0}
+                value={selectedProduct}
+                onChange={(event) => setSelectedProduct(event.target.value)}
                 className={cn(ui.fieldControlWhite, "cursor-pointer")}
               >
-                <option value="">-- Select product from CRM --</option>
-                {products.map((product) => (
-                  <option key={product}>{product}</option>
-                ))}
+                {productsLoading ? (
+                  <option value="">Loading products…</option>
+                ) : products.length === 0 ? (
+                  <option value="">No products available</option>
+                ) : (
+                  <>
+                    <option value="">-- Select product from CRM --</option>
+                    {products.map((product) => (
+                      <option
+                        key={`${product.AccountId}-${product.PrimaryProduct}-${product.ProductName}`}
+                        value={product.ProductName}
+                      >
+                        {product.ProductName}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
               <FormHelp>Product list sourced from CRM.</FormHelp>
             </FormField>

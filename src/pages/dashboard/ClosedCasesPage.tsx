@@ -3,22 +3,24 @@ import {
   mapPriorityType,
   mapCatalogStatusLabel,
   isProblemSolvedStatus,
+  matchesCreatedOnRange,
 } from "../../apis/cases";
+import { useMemo, useState } from "react";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { Pill } from "../../components/badges/Pill";
-import { useMemo, useState } from "react";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
-import { useCasesQuery } from "../../hooks/useCasesQuery";
+import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
 
 export function ClosedCasesPage() {
   const { user } = useAuth();
@@ -26,6 +28,8 @@ export function ClosedCasesPage() {
   const contactId = user?.ContactId ?? "";
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<"mine" | "all">("mine");
+  const [startDateTime, setStartDateTime] = useState("");
+  const [endDateTime, setEndDateTime] = useState("");
   const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
   const missingContactId = !contactId;
@@ -33,10 +37,10 @@ export function ClosedCasesPage() {
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
-      ? error instanceof Error
-        ? error.message
-        : "Failed to load closed cases"
-      : "";
+    ? error instanceof Error
+      ? error.message
+      : "Failed to load closed cases"
+    : "";
 
   const cases = useMemo(
     () => allCases.filter((item) => isProblemSolvedStatus(item.Status)),
@@ -46,6 +50,9 @@ export function ClosedCasesPage() {
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
     return cases.filter((item) => {
+      if (!matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)) {
+        return false;
+      }
       if (!term) return true;
       const title = item.Title ?? "";
       const type = mapPriorityType(item.Priority);
@@ -58,7 +65,7 @@ export function ClosedCasesPage() {
         resolution.toLowerCase().includes(term)
       );
     });
-  }, [cases, query]);
+  }, [cases, query, startDateTime, endDateTime]);
 
   return (
     <div className={ui.view}>
@@ -103,6 +110,17 @@ export function ClosedCasesPage() {
             onChange={setQuery}
             placeholder="Search closed cases…"
           />
+          <DateRangeFilter
+            start={startDateTime}
+            end={endDateTime}
+            onStartChange={setStartDateTime}
+            onEndChange={setEndDateTime}
+            onClear={() => {
+              setStartDateTime("");
+              setEndDateTime("");
+            }}
+            disabled={loading}
+          />
           <FilterPill
             active={scope === "mine"}
             showDot
@@ -135,7 +153,9 @@ export function ClosedCasesPage() {
             </div>
           ) : null}
           {errorMessage ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
+            <div className="px-5 py-4 text-[12.5px] text-red">
+              {errorMessage}
+            </div>
           ) : null}
           {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">

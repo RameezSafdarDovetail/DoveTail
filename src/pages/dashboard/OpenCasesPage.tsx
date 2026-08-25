@@ -6,16 +6,18 @@ import {
   matchesCaseSearch,
   mapCatalogStatusLabel,
   isProblemSolvedStatus,
+  matchesCreatedOnRange,
 } from "../../apis/cases";
 import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/badges/Badge";
-import { useMemo } from "react";
 import { Button } from "../../components/buttons/Button";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 import { SlaChip } from "../../components/badges/SlaChip";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
@@ -24,7 +26,7 @@ import { SearchInput } from "../../components/layout/SearchInput";
 import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { PriorityFilter } from "../../components/buttons/PriorityFilter";
-import { useCasesQuery } from "../../hooks/useCasesQuery";
+import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
 
 type CasePriority = "p1" | "p2" | "p3";
 
@@ -47,6 +49,8 @@ export function OpenCasesPage() {
     (params.get("priority") as CasePriority | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
   const searchBy = params.get("by");
+  const [startDateTime, setStartDateTime] = useState("");
+  const [endDateTime, setEndDateTime] = useState("");
   const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
 
   const missingContactId = !contactId;
@@ -54,19 +58,23 @@ export function OpenCasesPage() {
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
-      ? error instanceof Error
-        ? error.message
-        : "Failed to load open cases"
-      : "";
+    ? error instanceof Error
+      ? error.message
+      : "Failed to load open cases"
+    : "";
 
   const visible = useMemo(() => {
     return allCases.filter((item) => {
       if (isProblemSolvedStatus(item.Status)) return false;
       const casePriority = mapPriority(item.Priority);
       const matchesPriority = priority === "all" || casePriority === priority;
-      return matchesPriority && matchesCaseSearch(item, query, searchBy);
+      return (
+        matchesPriority &&
+        matchesCaseSearch(item, query, searchBy) &&
+        matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
+      );
     });
-  }, [allCases, priority, query, searchBy]);
+  }, [allCases, priority, query, searchBy, startDateTime, endDateTime]);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params);
@@ -125,6 +133,17 @@ export function OpenCasesPage() {
             onChange={(value) => updateParam("q", value)}
             placeholder="Search open cases..."
           />
+          <DateRangeFilter
+            start={startDateTime}
+            end={endDateTime}
+            onStartChange={setStartDateTime}
+            onEndChange={setEndDateTime}
+            onClear={() => {
+              setStartDateTime("");
+              setEndDateTime("");
+            }}
+            disabled={loading}
+          />
           {priorities.map((item) => (
             <PriorityFilter
               key={item.id}
@@ -156,7 +175,9 @@ export function OpenCasesPage() {
             </div>
           ) : null}
           {errorMessage ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
+            <div className="px-5 py-4 text-[12.5px] text-red">
+              {errorMessage}
+            </div>
           ) : null}
           {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
@@ -198,8 +219,8 @@ export function OpenCasesPage() {
                       catalogStatus === "open"
                         ? "open"
                         : catalogStatus === "pending"
-                          ? "pending"
-                          : "closed"
+                        ? "pending"
+                        : "closed"
                     }
                     withDot
                   >

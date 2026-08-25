@@ -4,23 +4,25 @@ import {
   mapCatalogStatus,
   matchesCaseSearch,
   mapCatalogStatusLabel,
+  matchesCreatedOnRange,
 } from "../../apis/cases";
+import { useMemo, useState } from "react";
 import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useSearchParams } from "react-router-dom";
 import { Pill } from "../../components/badges/Pill";
-import { useMemo } from "react";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
+import { useCasesQuery } from "../../hooks/useCasesQuery";
 import { TabPill } from "../../components/buttons/TabPill";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
-import { useCasesQuery } from "../../hooks/useCasesQuery";
+import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
 
 type CaseStatus = "open" | "pending" | "closed";
 
@@ -39,6 +41,8 @@ export function AllCasesPage() {
   const status = (params.get("status") as CaseStatus | "all" | null) ?? "all";
   const query = params.get("q") ?? "";
   const searchBy = params.get("by");
+  const [startDateTime, setStartDateTime] = useState("");
+  const [endDateTime, setEndDateTime] = useState("");
   const { data: cases = [], isLoading, isError, error } = useCasesQuery();
 
   const missingContactId = !contactId;
@@ -46,18 +50,22 @@ export function AllCasesPage() {
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
-      ? error instanceof Error
-        ? error.message
-        : "Failed to load cases"
-      : "";
+    ? error instanceof Error
+      ? error.message
+      : "Failed to load cases"
+    : "";
 
   const visible = useMemo(() => {
     return cases.filter((item) => {
       const catalogStatus = mapCatalogStatus(item.Status);
       const matchesStatus = status === "all" || catalogStatus === status;
-      return matchesStatus && matchesCaseSearch(item, query, searchBy);
+      return (
+        matchesStatus &&
+        matchesCaseSearch(item, query, searchBy) &&
+        matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
+      );
     });
-  }, [cases, query, searchBy, status]);
+  }, [cases, query, searchBy, status, startDateTime, endDateTime]);
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params);
@@ -111,6 +119,17 @@ export function AllCasesPage() {
             onChange={(value) => updateParam("q", value)}
             placeholder="Search all cases…"
           />
+          <DateRangeFilter
+            start={startDateTime}
+            end={endDateTime}
+            onStartChange={setStartDateTime}
+            onEndChange={setEndDateTime}
+            onClear={() => {
+              setStartDateTime("");
+              setEndDateTime("");
+            }}
+            disabled={loading}
+          />
           {tabs.map((tab) => (
             <TabPill
               key={tab.id}
@@ -135,7 +154,9 @@ export function AllCasesPage() {
             </div>
           ) : null}
           {errorMessage ? (
-            <div className="px-5 py-4 text-[12.5px] text-red">{errorMessage}</div>
+            <div className="px-5 py-4 text-[12.5px] text-red">
+              {errorMessage}
+            </div>
           ) : null}
           {!loading && !errorMessage && visible.length === 0 ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
@@ -194,8 +215,8 @@ export function AllCasesPage() {
                       catalogStatus === "open"
                         ? "open"
                         : catalogStatus === "pending"
-                          ? "pending"
-                          : "closed"
+                        ? "pending"
+                        : "closed"
                     }
                     withDot
                   >

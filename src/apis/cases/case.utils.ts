@@ -51,3 +51,55 @@ export function formatCaseDate(iso: string) {
 export function isProblemSolvedStatus(status: string) {
   return status.trim().toLowerCase().includes("problem solved");
 }
+
+const LOCAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Parses a `date` input value (`YYYY-MM-DD`) as a local calendar-day bound.
+ * Start = local 00:00:00.000, End = local 23:59:59.999.
+ */
+export function parseLocalDateBound(
+  value: string,
+  bound: "start" | "end"
+): Date | null {
+  const trimmed = value.trim();
+  if (!LOCAL_DATE_PATTERN.test(trimmed)) return null;
+  const [year, month, day] = trimmed.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  if (bound === "start") return new Date(year, month - 1, day, 0, 0, 0, 0);
+  return new Date(year, month - 1, day, 23, 59, 59, 999);
+}
+
+export function isInvalidCreatedOnRange(startLocal: string, endLocal: string) {
+  const start = parseLocalDateBound(startLocal, "start");
+  const end = parseLocalDateBound(endLocal, "start");
+  if (!start || !end) return false;
+  return end.getTime() < start.getTime();
+}
+
+/**
+ * Filters by CreatedOn (UTC ISO) against local date-only start/end values.
+ * - start only: CreatedOn >= start of that local day
+ * - end only: CreatedOn <= end of that local day
+ * - both: inclusive local-day range
+ * - invalid range (end < start): no matches
+ */
+export function matchesCreatedOnRange(
+  createdOn: string,
+  startLocal: string,
+  endLocal: string
+) {
+  if (!startLocal.trim() && !endLocal.trim()) return true;
+
+  if (isInvalidCreatedOnRange(startLocal, endLocal)) return false;
+
+  const created = new Date(createdOn);
+  if (Number.isNaN(created.getTime())) return false;
+
+  const start = parseLocalDateBound(startLocal, "start");
+  const end = parseLocalDateBound(endLocal, "end");
+
+  if (start && created.getTime() < start.getTime()) return false;
+  if (end && created.getTime() > end.getTime()) return false;
+  return true;
+}
