@@ -39,7 +39,7 @@ export const ui = {
 
 export const tableCols = {
   cases:
-    "grid-cols-[118px_minmax(0,1.5fr)_minmax(118px,140px)_100px_92px_minmax(96px,120px)] gap-x-3 max-[640px]:min-w-[900px]",
+    "grid-cols-[118px_minmax(0,1.5fr)_minmax(118px,140px)_100px_92px_minmax(96px,120px)_minmax(100px,118px)] gap-x-3 max-[640px]:min-w-[1020px]",
   casesAll:
     "grid-cols-[118px_minmax(0,1.4fr)_48px_minmax(0,0.85fr)_minmax(132px,152px)_64px] gap-x-3 max-[640px]:min-w-[880px]",
   quotes:

@@ -103,3 +103,77 @@ export function matchesCreatedOnRange(
   if (end && created.getTime() > end.getTime()) return false;
   return true;
 }
+
+const ESCALATION_PROGRESS_STEPS = [
+  { label: "Client Escalation", pendingSubtext: "" },
+  { label: "Auto-Acknowledgement", pendingSubtext: "" },
+  { label: "Staff Review", pendingSubtext: "ZN – internal notify" },
+  { label: "Client Response", pendingSubtext: "Pending" },
+] as const;
+
+const ESCALATION_STATUS_PROGRESS: Record<
+  string,
+  { completedCount: number; activeIndex: number }
+> = {
+  "client escalation": { completedCount: 1, activeIndex: 1 },
+  "auto-acknowledgement": { completedCount: 2, activeIndex: 2 },
+  "auto acknowledgement": { completedCount: 2, activeIndex: 2 },
+  "staff review": { completedCount: 2, activeIndex: 2 },
+  "client response": { completedCount: 3, activeIndex: 3 },
+};
+
+export function formatEscalationDateTime(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  const datePart = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+  const timePart = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return `${datePart}, ${timePart}`;
+}
+
+export function getEscalationProgressSteps(status: string) {
+  const progress =
+    ESCALATION_STATUS_PROGRESS[status.trim().toLowerCase()] ??
+    ESCALATION_STATUS_PROGRESS["client escalation"];
+
+  return ESCALATION_PROGRESS_STEPS.map((step, index) => {
+    const isComplete = index < progress.completedCount;
+
+    return {
+      ...step,
+      state: isComplete ? ("complete" as const) : ("pending" as const),
+    };
+  });
+}
+
+export function getEscalationClientResponseLabel(status: string) {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === "client response") {
+    return "Response received";
+  }
+
+  if (normalized === "staff review") {
+    return "[Awaiting staff review outcome]";
+  }
+
+  return "[Pending]";
+}
+
+export function getEscalationReviewerLabel(status: string) {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === "client response") {
+    return "Support lead";
+  }
+
+  return "[Auto-assigned support lead]";
+}

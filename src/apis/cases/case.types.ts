@@ -8,6 +8,33 @@ export interface ActiveCase {
   Sla: string;
   Priority: string;
   CustomerReference?: string | null;
+  AccountId?: string | null;
+  IsEscalated?: boolean;
+}
+
+export interface EscalateCasePayload {
+  CaseId: string;
+  Reason: string;
+  EscalatedByContactId: string;
+}
+
+export interface EscalateCaseResponse {
+  success?: boolean;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export interface EscalationDetails {
+  CaseId: string;
+  IsEscalated: boolean;
+  CaseNumber: string;
+  CaseTitle: string | null;
+  Priority: string;
+  CaseStatus: string;
+  EscalationReason: string;
+  EscalationStatus: string;
+  EscalatedBy: string;
+  EscalatedOn: string;
 }
 
 export interface CreateCasePayload {

@@ -1,6 +1,7 @@
 import {
   mapSla,
   mapPriority,
+  type ActiveCase,
   mapCatalogStatus,
   mapPriorityLabel,
   matchesCaseSearch,
@@ -27,6 +28,8 @@ import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { PriorityFilter } from "../../components/buttons/PriorityFilter";
 import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
+import { EscalateCaseModal } from "../../components/popups/EscalateCaseModal";
+import { EscalateDetailsModal } from "../../components/popups/EscalateDetailsModal";
 
 type CasePriority = "p1" | "p2" | "p3";
 
@@ -51,7 +54,16 @@ export function OpenCasesPage() {
   const searchBy = params.get("by");
   const [startDateTime, setStartDateTime] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
-  const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
+  const [escalateCase, setEscalateCase] = useState<ActiveCase | null>(null);
+  const [escalateDetailsCase, setEscalateDetailsCase] =
+    useState<ActiveCase | null>(null);
+  const {
+    data: allCases = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCasesQuery();
 
   const missingContactId = !contactId;
   const loading = !missingContactId && isLoading;
@@ -167,6 +179,7 @@ export function OpenCasesPage() {
             "Priority",
             "Age / TAT",
             "SLA",
+            "Actions",
           ]}
         >
           {loading ? (
@@ -238,10 +251,47 @@ export function OpenCasesPage() {
                 <span className="min-w-0 overflow-hidden">
                   <SlaChip tone={mapSla(item.Sla)}>{item.Sla}</SlaChip>
                 </span>
+                <div className="flex items-center justify-center">
+                  {item.IsEscalated ? (
+                    <button
+                      type="button"
+                      className="cursor-pointer rounded-md border border-accent-mid bg-accent-soft px-2.5 py-1 text-[11.5px] font-semibold text-accent transition-[background-color,border-color,opacity] duration-150 hover:border-accent hover:bg-[#e4ecfb]"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEscalateDetailsCase(item);
+                      }}
+                    >
+                      View Details
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="cursor-pointer rounded-md border border-accent-mid bg-accent px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEscalateCase(item);
+                      }}
+                    >
+                      Escalate
+                    </button>
+                  )}
+                </div>
               </TableRow>
             );
           })}
         </TableCard>
+
+        <EscalateCaseModal
+          caseItem={escalateCase}
+          onClose={() => setEscalateCase(null)}
+          onSuccess={() => {
+            void refetch();
+          }}
+        />
+        <EscalateDetailsModal
+          caseItem={escalateDetailsCase}
+          onClose={() => setEscalateDetailsCase(null)}
+        />
       </PageBody>
     </div>
   );
