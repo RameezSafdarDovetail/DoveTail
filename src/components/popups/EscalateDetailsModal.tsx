@@ -39,11 +39,12 @@ function EscalationProgressStepper({
   return (
     <div className="mt-5">
       <div className="relative">
-        <div className="absolute left-[12px] right-[12px] top-[11px] h-px bg-[#d7deea]" />
-        <div
-          className="absolute left-[12px] top-[11px] h-px bg-[#c9a227] transition-[width] duration-300"
-          style={{ width: `calc(${progressPercent}% - 12px)` }}
-        />
+        <div className="absolute left-[12px] right-[12px] top-[11px] h-px bg-[#d7deea]">
+          <div
+            className="absolute left-0 top-0 h-px bg-[#c9a227] transition-[width] duration-300"
+            style={{ width: `${Math.max(progressPercent, 0)}%` }}
+          />
+        </div>
         <ol className="relative grid grid-cols-4 gap-2">
           {steps.map((step) => {
             const subtext =

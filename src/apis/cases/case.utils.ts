@@ -111,16 +111,22 @@ const ESCALATION_PROGRESS_STEPS = [
   { label: "Client Response", pendingSubtext: "Pending" },
 ] as const;
 
-const ESCALATION_STATUS_PROGRESS: Record<
-  string,
-  { completedCount: number; activeIndex: number }
-> = {
-  "client escalation": { completedCount: 1, activeIndex: 1 },
-  "auto-acknowledgement": { completedCount: 2, activeIndex: 2 },
-  "auto acknowledgement": { completedCount: 2, activeIndex: 2 },
-  "staff review": { completedCount: 2, activeIndex: 2 },
-  "client response": { completedCount: 3, activeIndex: 3 },
+/** How many steps are complete when status matches that stage (1–4). */
+const ESCALATION_STATUS_PROGRESS: Record<string, number> = {
+  "client escalation": 1,
+  "auto-acknowledgement": 2,
+  "auto acknowledgement": 2,
+  "staff review": 3,
+  "client response": 4,
 };
+
+function normalizeEscalationStatus(status: string) {
+  return status
+    .trim()
+    .toLowerCase()
+    .replace(/[,.;:]+$/g, "")
+    .replace(/\s+/g, " ");
+}
 
 export function formatEscalationDateTime(iso: string) {
   const date = new Date(iso);
@@ -140,12 +146,13 @@ export function formatEscalationDateTime(iso: string) {
 }
 
 export function getEscalationProgressSteps(status: string) {
-  const progress =
-    ESCALATION_STATUS_PROGRESS[status.trim().toLowerCase()] ??
+  const normalized = normalizeEscalationStatus(status);
+  const completedCount =
+    ESCALATION_STATUS_PROGRESS[normalized] ??
     ESCALATION_STATUS_PROGRESS["client escalation"];
 
   return ESCALATION_PROGRESS_STEPS.map((step, index) => {
-    const isComplete = index < progress.completedCount;
+    const isComplete = index < completedCount;
 
     return {
       ...step,
@@ -155,7 +162,7 @@ export function getEscalationProgressSteps(status: string) {
 }
 
 export function getEscalationClientResponseLabel(status: string) {
-  const normalized = status.trim().toLowerCase();
+  const normalized = normalizeEscalationStatus(status);
 
   if (normalized === "client response") {
     return "Response received";
@@ -169,7 +176,7 @@ export function getEscalationClientResponseLabel(status: string) {
 }
 
 export function getEscalationReviewerLabel(status: string) {
-  const normalized = status.trim().toLowerCase();
+  const normalized = normalizeEscalationStatus(status);
 
   if (normalized === "client response") {
     return "Support lead";
