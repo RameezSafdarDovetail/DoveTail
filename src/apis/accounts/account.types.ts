@@ -8,5 +8,5 @@ export interface CustomerProduct {
   AccountId: string;
   AccountName: string;
   PrimaryProduct: string;
-  ProductName: string;
+  ProductName: string | null;
 }

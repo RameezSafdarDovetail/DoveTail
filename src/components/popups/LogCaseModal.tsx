@@ -32,6 +32,22 @@ const priorityOptions = [
   { value: 3, label: "P3 Low Priority Call" },
 ] as const;
 
+const FALLBACK_PRODUCT_NAMES = [
+  "FreightWare TMS",
+  "HoneyComb WMS",
+  "Infios 3PL WMS",
+  "MobileControl ePOD",
+  "eDocs",
+] as const;
+
+function getCrmProductName(products: CustomerProduct[]) {
+  for (const product of products) {
+    const name = product.ProductName?.trim();
+    if (name) return name;
+  }
+  return null;
+}
+
 export function LogCaseModal() {
   const { user } = useAuth();
   const { modal, closeModal } = useModal();
@@ -55,6 +71,8 @@ export function LogCaseModal() {
     () => (category ? categoryOptions[category] ?? [] : []),
     [category]
   );
+
+  const crmProductName = useMemo(() => getCrmProductName(products), [products]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,7 +121,7 @@ export function LogCaseModal() {
         const data = await getCustomerProduct(contactId);
         if (!cancelled) {
           setProducts(data);
-          setSelectedProduct(data[0]?.ProductName ?? "");
+          setSelectedProduct(getCrmProductName(data) ?? "");
         }
       } catch (error) {
         if (!cancelled) {
@@ -266,34 +284,54 @@ export function LogCaseModal() {
               <FormLabel htmlFor="case-product" required>
                 Product
               </FormLabel>
-              <select
-                id="case-product"
-                name="product"
-                required
-                disabled={productsLoading || products.length === 0}
-                value={selectedProduct}
-                onChange={(event) => setSelectedProduct(event.target.value)}
-                className={cn(ui.fieldControlWhite, "cursor-pointer")}
-              >
-                {productsLoading ? (
-                  <option value="">Loading products…</option>
-                ) : products.length === 0 ? (
-                  <option value="">No products available</option>
-                ) : (
-                  <>
-                    <option value="">-- Select product from CRM --</option>
-                    {products.map((product) => (
-                      <option
-                        key={`${product.AccountId}-${product.PrimaryProduct}-${product.ProductName}`}
-                        value={product.ProductName}
-                      >
-                        {product.ProductName}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-              <FormHelp>Product list sourced from CRM.</FormHelp>
+              {productsLoading ? (
+                <input
+                  id="case-product"
+                  type="text"
+                  readOnly
+                  value="Loading products…"
+                  className={ui.fieldControl}
+                />
+              ) : products.length === 0 ? (
+                <input
+                  id="case-product"
+                  type="text"
+                  readOnly
+                  value="No products available"
+                  className={ui.fieldControl}
+                />
+              ) : crmProductName ? (
+                <input
+                  id="case-product"
+                  name="product"
+                  type="text"
+                  readOnly
+                  required
+                  value={crmProductName}
+                  className={ui.fieldControl}
+                />
+              ) : (
+                <select
+                  id="case-product"
+                  name="product"
+                  required
+                  value={selectedProduct}
+                  onChange={(event) => setSelectedProduct(event.target.value)}
+                  className={cn(ui.fieldControlWhite, "cursor-pointer")}
+                >
+                  <option value="">-- Select product --</option>
+                  {FALLBACK_PRODUCT_NAMES.map((productName) => (
+                    <option key={productName} value={productName}>
+                      {productName}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <FormHelp>
+                {crmProductName
+                  ? "Product assigned from CRM."
+                  : "Select the product for this case."}
+              </FormHelp>
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-environment" required>
