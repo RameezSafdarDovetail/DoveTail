@@ -1,7 +1,6 @@
 // import { getAuthToken } from "../libs/authSession";
 
-export const API_BASE_URL =
-  "https://dev-clientportalapi-fapp-hahgf6efb8cvhxfv.eastus-01.azurewebsites.net/api/";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function apiUrl(path = "") {
   const base = API_BASE_URL.replace(/\/+$/, "");
