@@ -4,12 +4,21 @@ export interface ActiveCase {
   CaseNumber: string;
   CreatedOn: string;
   Status: string;
-  CaseAge: string;
+  CaseAge: string | null;
   Sla: string;
   Priority: string;
   CustomerReference?: string | null;
   AccountId?: string | null;
   IsEscalated?: boolean;
+}
+
+export interface CasesPageResponse {
+  Page: number;
+  PageSize: number;
+  TotalRecords: number;
+  TotalPages: number;
+  HasMore: boolean;
+  Data: ActiveCase[];
 }
 
 export interface EscalateCasePayload {

@@ -22,6 +22,8 @@ import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+const PAGE_SIZE = 1000;
+
 const quoteStatusOptions = [
   { id: "quoting-in-progress", label: "Quoting In Progress" },
   { id: "awaiting-customer", label: "Awaiting Customer Response" },
@@ -65,14 +67,25 @@ export function QuotesPage() {
   const [statusFilter, setStatusFilter] = useState<QuoteStatusFilter>("all");
   const [statusOpen, setStatusOpen] = useState(false);
   const [actionModal, setActionModal] = useState<QuoteActionState | null>(null);
+  const [page, setPage] = useState(1);
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadQuotes = useCallback(
-    async (options?: { silent?: boolean }) => {
+    async (options?: { silent?: boolean; page?: number }) => {
+      const requestPage = options?.page ?? page;
+
       if (!contactId) {
         setQuotes([]);
+        setTotalPages(0);
+        setTotalRecords(0);
+        setHasMore(false);
+        setCurrentPage(1);
         setError("Missing contact id. Please sign in again.");
         setLoading(false);
         return;
@@ -81,24 +94,32 @@ export function QuotesPage() {
       if (!options?.silent) {
         setLoading(true);
         setError("");
+        setQuotes([]);
       }
 
       try {
-        const data = await getQuotes(contactId);
-        setQuotes(data);
+        const response = await getQuotes(contactId, requestPage, PAGE_SIZE);
+        setQuotes(response.Data ?? []);
+        setTotalPages(response.TotalPages ?? 0);
+        setTotalRecords(response.TotalRecords ?? 0);
+        setHasMore(response.HasMore ?? false);
+        setCurrentPage(response.Page ?? requestPage);
         setError("");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load quotes");
+        if (!options?.silent) {
+          setQuotes([]);
+        }
       } finally {
         setLoading(false);
       }
     },
-    [contactId]
+    [contactId, page]
   );
 
   useEffect(() => {
-    void loadQuotes();
-  }, [loadQuotes]);
+    void loadQuotes({ page });
+  }, [loadQuotes, page]);
 
   useEffect(() => {
     if (!statusOpen) return;
@@ -141,6 +162,10 @@ export function QuotesPage() {
       );
     });
   }, [query, quotes, scope, statusFilter]);
+
+  const canGoPrevious = currentPage > 1 && !loading;
+  const canGoNext =
+    !loading && hasMore && (totalPages === 0 || currentPage < totalPages);
 
   function openActionModal(type: QuoteActionState["type"], quote: QuoteItem) {
     setActionModal({ type, quote });
@@ -244,7 +269,14 @@ export function QuotesPage() {
             All Quotes
           </FilterPill>
           <span className={ui.controlsMeta}>
-            {loading ? "Loading…" : pluralize(visible.length, "quote")}
+            {loading
+              ? "Loading…"
+              : totalRecords > 0
+              ? `${pluralize(
+                  visible.length,
+                  "quote"
+                )} on this page · ${totalRecords} total`
+              : pluralize(visible.length, "quote")}
           </span>
         </div>
 
@@ -273,76 +305,110 @@ export function QuotesPage() {
               No quotes found.
             </div>
           ) : null}
-          {visible.map((item) => {
-            const title = item.Title || "Untitled quote";
-            const product = item.Product || "—";
-            const subject = item.Subject || "—";
-            const statusText = item.Status ?? "";
-            const showActions = !shouldHideQuoteActions(statusText);
+          {!loading &&
+            visible.map((item) => {
+              const title = item.Title || "Untitled quote";
+              const product = item.Product || "—";
+              const subject = item.Subject || "—";
+              const statusText = item.Status ?? "";
+              const showActions = !shouldHideQuoteActions(statusText);
 
-            return (
-              <TableRow key={item.Id} columnsClassName={quoteTableCols}>
-                <span
-                  className={cn(ui.caseNum, "min-w-0 truncate")}
-                  title={item.QuoteNumber}
-                >
-                  {item.QuoteNumber}
-                </span>
-                <div className="min-w-0">
-                  <div className={cn(ui.caseTitle, "truncate")} title={title}>
-                    {title}
+              return (
+                <TableRow key={item.Id} columnsClassName={quoteTableCols}>
+                  <span
+                    className={cn(ui.caseNum, "min-w-0 truncate")}
+                    title={item.QuoteNumber}
+                  >
+                    {item.QuoteNumber}
+                  </span>
+                  <div className="min-w-0">
+                    <div className={cn(ui.caseTitle, "truncate")} title={title}>
+                      {title}
+                    </div>
+                    <div className={cn(ui.caseSub, "truncate")} title={subject}>
+                      Re: {subject}
+                    </div>
                   </div>
-                  <div className={cn(ui.caseSub, "truncate")} title={subject}>
-                    Re: {subject}
+                  <div className="min-w-0">
+                    <Pill>{product}</Pill>
                   </div>
-                </div>
-                <div className="min-w-0">
-                  <Pill>{product}</Pill>
-                </div>
-                <div className="min-w-0 overflow-hidden">
-                  <Badge tone={mapQuoteStatusTone(statusText)}>
-                    {statusText || "—"}
-                  </Badge>
-                </div>
-                <span
-                  className="min-w-0 truncate text-[12.5px] text-text-2"
-                  title={subject}
-                >
-                  {subject}
-                </span>
-                <span className="whitespace-nowrap text-xs text-text-3">
-                  {formatCaseDate(item.CreatedOn)}
-                </span>
-                <div className="flex items-center justify-end gap-1.5">
-                  {showActions ? (
-                    <>
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-md border border-[#2f7b32] bg-[#34a853] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
-                        onClick={() => openActionModal("accept", item)}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-md border border-[#b3261e] bg-[#d93025] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
-                        onClick={() => openActionModal("reject", item)}
-                      >
-                        Reject
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </TableRow>
-            );
-          })}
+                  <div className="min-w-0 overflow-hidden">
+                    <Badge tone={mapQuoteStatusTone(statusText)}>
+                      {statusText || "—"}
+                    </Badge>
+                  </div>
+                  <span
+                    className="min-w-0 truncate text-[12.5px] text-text-2"
+                    title={subject}
+                  >
+                    {subject}
+                  </span>
+                  <span className="whitespace-nowrap text-xs text-text-3">
+                    {formatCaseDate(item.CreatedOn)}
+                  </span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    {showActions ? (
+                      <>
+                        <button
+                          type="button"
+                          className="cursor-pointer rounded-md border border-[#2f7b32] bg-[#34a853] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                          onClick={() => openActionModal("accept", item)}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          className="cursor-pointer rounded-md border border-[#b3261e] bg-[#d93025] px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                          onClick={() => openActionModal("reject", item)}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                </TableRow>
+              );
+            })}
         </TableCard>
+
+        <div
+          className={cn(
+            ui.glass,
+            "mt-3 flex flex-wrap items-center justify-between gap-3 rounded-default px-5 py-3"
+          )}
+        >
+          <span className="text-[12.5px] text-text-3">
+            {totalRecords > 0
+              ? `Page ${currentPage} of ${
+                  totalPages || "—"
+                } · ${totalRecords} total`
+              : "No pages"}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              compact
+              disabled={!canGoPrevious}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              compact
+              disabled={!canGoNext}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
 
         <QuoteActionModal
           action={actionModal}
           onClose={closeActionModal}
           onSuccess={() => {
-            void loadQuotes({ silent: true });
+            void loadQuotes({ silent: true, page });
           }}
         />
       </PageBody>

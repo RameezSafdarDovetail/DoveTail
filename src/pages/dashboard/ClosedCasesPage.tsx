@@ -1,8 +1,8 @@
 import {
+  getClosedCases,
   formatCaseDate,
   mapPriorityType,
   mapCatalogStatusLabel,
-  isProblemSolvedStatus,
   matchesCreatedOnRange,
 } from "../../apis/cases";
 import { useMemo, useState } from "react";
@@ -10,10 +10,10 @@ import { tableCols, ui } from "../../libs/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
+import { useQuery } from "@tanstack/react-query";
 import { Pill } from "../../components/badges/Pill";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
-import { useCasesQuery } from "../../hooks/useCasesQuery";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -21,6 +21,8 @@ import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
+
+const PAGE_SIZE = 1000;
 
 export function ClosedCasesPage() {
   const { user } = useAuth();
@@ -30,10 +32,16 @@ export function ClosedCasesPage() {
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [startDateTime, setStartDateTime] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
-  const { data: allCases = [], isLoading, isError, error } = useCasesQuery();
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading, isFetching, isError, error } = useQuery({
+    queryKey: ["closed-cases", contactId, page, PAGE_SIZE],
+    queryFn: () => getClosedCases(contactId, page, PAGE_SIZE),
+    enabled: Boolean(contactId),
+  });
 
   const missingContactId = !contactId;
-  const loading = !missingContactId && isLoading;
+  const loading = !missingContactId && (isLoading || isFetching);
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
@@ -42,14 +50,15 @@ export function ClosedCasesPage() {
       : "Failed to load closed cases"
     : "";
 
-  const cases = useMemo(
-    () => allCases.filter((item) => isProblemSolvedStatus(item.Status)),
-    [allCases]
-  );
+  const pageCases = loading ? [] : data?.Data ?? [];
+  const totalPages = data?.TotalPages ?? 0;
+  const hasMore = data?.HasMore ?? false;
+  const currentPage = data?.Page ?? page;
+  const totalRecords = data?.TotalRecords ?? 0;
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return cases.filter((item) => {
+    return pageCases.filter((item) => {
       if (!matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)) {
         return false;
       }
@@ -65,7 +74,11 @@ export function ClosedCasesPage() {
         resolution.toLowerCase().includes(term)
       );
     });
-  }, [cases, query, startDateTime, endDateTime]);
+  }, [pageCases, query, startDateTime, endDateTime]);
+
+  const canGoPrevious = currentPage > 1 && !loading;
+  const canGoNext =
+    !loading && hasMore && (totalPages === 0 || currentPage < totalPages);
 
   return (
     <div className={ui.view}>
@@ -132,7 +145,14 @@ export function ClosedCasesPage() {
             All Closed
           </FilterPill>
           <span className={ui.controlsMeta}>
-            {loading ? "Loading…" : pluralize(visible.length, "case")}
+            {loading
+              ? "Loading…"
+              : totalRecords > 0
+              ? `${pluralize(
+                  visible.length,
+                  "case"
+                )} on this page · ${totalRecords} total`
+              : pluralize(visible.length, "case")}
           </span>
         </div>
 
@@ -162,54 +182,88 @@ export function ClosedCasesPage() {
               No closed cases found.
             </div>
           ) : null}
-          {visible.map((item) => {
-            const title = item.Title || "Untitled case";
-            const type = mapPriorityType(item.Priority);
-            const resolution = mapCatalogStatusLabel(item.Status);
+          {!loading &&
+            visible.map((item) => {
+              const title = item.Title || "Untitled case";
+              const type = mapPriorityType(item.Priority);
+              const resolution = mapCatalogStatusLabel(item.Status);
 
-            return (
-              <TableRow
-                key={item.Id}
-                columnsClassName={tableCols.closed}
-                muted
-                onClick={() => openCaseDetail(item.Id)}
-              >
-                <span
-                  className={cn(ui.caseNumDim, "min-w-0 truncate")}
-                  title={item.CaseNumber}
+              return (
+                <TableRow
+                  key={item.Id}
+                  columnsClassName={tableCols.closed}
+                  muted
+                  onClick={() => openCaseDetail(item.Id)}
                 >
-                  {item.CaseNumber}
-                </span>
-                <div className="min-w-0">
-                  <div className={cn(ui.caseTitle, "truncate")} title={title}>
-                    {title}
+                  <span
+                    className={cn(ui.caseNumDim, "min-w-0 truncate")}
+                    title={item.CaseNumber}
+                  >
+                    {item.CaseNumber}
+                  </span>
+                  <div className="min-w-0">
+                    <div className={cn(ui.caseTitle, "truncate")} title={title}>
+                      {title}
+                    </div>
+                    <div
+                      className={cn(ui.caseSub, "truncate")}
+                      title={item.Priority}
+                    >
+                      Re: {item.Priority}
+                    </div>
                   </div>
-                  <div
-                    className={cn(ui.caseSub, "truncate")}
+                  <div className="min-w-0">
+                    <Pill>{type}</Pill>
+                  </div>
+                  <span
+                    className="min-w-0 truncate text-[12.5px] text-text-3"
                     title={item.Priority}
                   >
-                    Re: {item.Priority}
+                    {item.Priority}
+                  </span>
+                  <div className="min-w-0 overflow-hidden">
+                    <Badge tone="resolved">{resolution}</Badge>
                   </div>
-                </div>
-                <div className="min-w-0">
-                  <Pill>{type}</Pill>
-                </div>
-                <span
-                  className="min-w-0 truncate text-[12.5px] text-text-3"
-                  title={item.Priority}
-                >
-                  {item.Priority}
-                </span>
-                <div className="min-w-0 overflow-hidden">
-                  <Badge tone="resolved">{resolution}</Badge>
-                </div>
-                <span className="whitespace-nowrap text-xs text-text-3">
-                  {formatCaseDate(item.CreatedOn)}
-                </span>
-              </TableRow>
-            );
-          })}
+                  <span className="whitespace-nowrap text-xs text-text-3">
+                    {formatCaseDate(item.CreatedOn)}
+                  </span>
+                </TableRow>
+              );
+            })}
         </TableCard>
+
+        <div
+          className={cn(
+            ui.glass,
+            "mt-3 flex flex-wrap items-center justify-between gap-3 rounded-default px-5 py-3"
+          )}
+        >
+          <span className="text-[12.5px] text-text-3">
+            {totalRecords > 0
+              ? `Page ${currentPage} of ${
+                  totalPages || "—"
+                } · ${totalRecords} total`
+              : "No pages"}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              compact
+              disabled={!canGoPrevious}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              compact
+              disabled={!canGoNext}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </PageBody>
     </div>
   );

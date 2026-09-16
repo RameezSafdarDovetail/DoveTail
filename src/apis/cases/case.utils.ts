@@ -25,7 +25,10 @@ export function matchesCaseSearch(
 }
 
 /** Parse CaseAge like "19d 22h 58m" / "4h 51m" / "1h 5m" into minutes. */
-export function parseCaseAgeMinutes(caseAge: string): number {
+export function parseCaseAgeMinutes(
+  caseAge: string | null | undefined
+): number {
+  if (!caseAge) return 0;
   const days = Number(/(\d+)\s*d/i.exec(caseAge)?.[1] ?? 0);
   const hours = Number(/(\d+)\s*h/i.exec(caseAge)?.[1] ?? 0);
   const minutes = Number(/(\d+)\s*m/i.exec(caseAge)?.[1] ?? 0);
@@ -48,8 +51,8 @@ export function formatCaseDate(iso: string) {
 }
 
 /** Matches statuses like "84 Problem Solved". */
-export function isProblemSolvedStatus(status: string) {
-  return status.trim().toLowerCase().includes("problem solved");
+export function isProblemSolvedStatus(status: string | null | undefined) {
+  return (status ?? "").trim().toLowerCase().includes("problem solved");
 }
 
 const LOCAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

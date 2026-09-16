@@ -1,15 +1,24 @@
 import { apiRequest, apiFormRequest } from "../index";
 import type {
-  QuoteItem,
+  QuotesPageResponse,
   AcceptQuoteResponse,
   RejectQuotePayload,
   RejectQuoteResponse,
 } from "./quote.types";
 
-export async function getQuotes(contactId: string) {
-  const params = new URLSearchParams({ contactId });
-  console.log(`GetQuotes?${params.toString()}`);
-  return apiRequest<QuoteItem[]>(`GetQuotes?${params.toString()}`, {
+const DEFAULT_PAGE_SIZE = 1000;
+
+export async function getQuotes(
+  contactId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+) {
+  const params = new URLSearchParams({
+    contactId,
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return apiRequest<QuotesPageResponse>(`GetQuotes?${params.toString()}`, {
     method: "GET",
   });
 }

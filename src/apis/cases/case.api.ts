@@ -1,51 +1,58 @@
 import { apiRequest, apiFormRequest } from "../index";
 import type {
-  ActiveCase,
   CaseDetail,
+  CasesPageResponse,
+  EscalationDetails,
   CreateCaseResponse,
   EscalateCasePayload,
   EscalateCaseResponse,
-  EscalationDetails,
 } from "./case.types";
 
-function normalizeActiveCases(data: unknown): ActiveCase[] {
-  if (Array.isArray(data)) return data;
+const DEFAULT_PAGE_SIZE = 1000;
 
-  // Some backends return a JSON string instead of a parsed array.
-  if (typeof data === "string") {
-    try {
-      const parsed: unknown = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  if (data && typeof data === "object") {
-    const record = data as Record<string, unknown>;
-    for (const key of ["value", "data", "cases", "Cases", "result", "Result"]) {
-      if (Array.isArray(record[key])) return record[key] as ActiveCase[];
-    }
-    console.error("GetActiveCases returned unexpected object:", data);
-  }
-  return [];
-}
-
-export async function getActiveCases(contactId: string) {
-  const params = new URLSearchParams({ contactId });
-  const data = await apiRequest<unknown>(
-    `GetActiveCases?${params.toString()}`,
-    { method: "GET" }
-  );
-  return normalizeActiveCases(data);
-}
-
-export async function getAllCases(contactId: string) {
-  const params = new URLSearchParams({ contactId });
-  const data = await apiRequest<unknown>(`GetAllCases?${params.toString()}`, {
+export async function getActiveCases(
+  contactId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+) {
+  const params = new URLSearchParams({
+    contactId,
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return apiRequest<CasesPageResponse>(`GetActiveCases?${params.toString()}`, {
     method: "GET",
   });
-  return normalizeActiveCases(data);
+}
+
+export async function getAllCases(
+  contactId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+) {
+  const params = new URLSearchParams({
+    contactId,
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return apiRequest<CasesPageResponse>(`GetAllCases?${params.toString()}`, {
+    method: "GET",
+  });
+}
+
+export async function getClosedCases(
+  contactId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+) {
+  const params = new URLSearchParams({
+    contactId,
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return apiRequest<CasesPageResponse>(`GetClosedCases?${params.toString()}`, {
+    method: "GET",
+  });
 }
 
 export async function createCase(payload: FormData) {

@@ -8,6 +8,15 @@ export interface QuoteItem {
   Product: string | null;
 }
 
+export interface QuotesPageResponse {
+  Page: number;
+  PageSize: number;
+  TotalRecords: number;
+  TotalPages: number;
+  HasMore: boolean;
+  Data: QuoteItem[];
+}
+
 export interface AcceptQuoteResponse {
   success?: boolean;
   message?: string;

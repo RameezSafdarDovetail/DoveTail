@@ -26,8 +26,8 @@ export function mapPriorityCodeLabel(code: number | null | undefined) {
   return priorityCodeLabels[code] ?? String(code);
 }
 
-export function mapPriority(priority: string): CasePriority {
-  const value = priority.toLowerCase();
+export function mapPriority(priority: string | null | undefined): CasePriority {
+  const value = (priority ?? "").toLowerCase();
   if (value.includes("p1") || value.includes("high")) return "p1";
   if (
     value.includes("p2") ||
@@ -44,19 +44,19 @@ export function mapPriorityLabel(priority: CasePriority) {
   return "✓ P3";
 }
 
-export function mapStatus(status: string): {
+export function mapStatus(status: string | null | undefined): {
   label: string;
   tone: HomeStatusTone;
 } {
-  const value = status.toLowerCase();
+  const value = (status ?? "").toLowerCase();
   if (value.includes("progress")) {
     return { label: "In Progress", tone: "progress" };
   }
   return { label: "Open", tone: "open" };
 }
 
-export function mapSla(sla: string): SlaTone {
-  const value = sla.toLowerCase();
+export function mapSla(sla: string | null | undefined): SlaTone {
+  const value = (sla ?? "").toLowerCase();
   if (value.includes("overdue")) return "risk";
   if (value.includes("left")) {
     if (
