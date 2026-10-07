@@ -1,9 +1,9 @@
-import { ui } from "../../libs/ui";
+// import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
-import { Link } from "react-router-dom";
-import { paths } from "../../routes/paths";
+// import { Link } from "react-router-dom";
+// import { paths } from "../../routes/paths";
 import { useModal } from "../../hooks/useModal";
-import { priorityCards } from "../../data/cases";
+// import { priorityCards } from "../../data/cases";
 
 const quickCard =
   "relative flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-glass-card-border bg-glass-card px-3 pt-[18px] pb-4 no-underline shadow-card backdrop-blur-[16px] transition-colors duration-150 hover:bg-glass-hover";
@@ -52,7 +52,7 @@ export function QuickAccess() {
         </button>
       </div>
 
-      {priorityCards.map((card) => (
+      {/* {priorityCards.map((card) => (
         <Link
           key={card.priority}
           className={cn(
@@ -84,7 +84,7 @@ export function QuickAccess() {
             {card.rule}
           </div>
         </Link>
-      ))}
+      ))} */}
     </div>
   );
 }

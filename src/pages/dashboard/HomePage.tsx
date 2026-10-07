@@ -3,7 +3,7 @@ import {
   mapStatus,
   mapPriority,
   mapPriorityLabel,
-  buildDashboardStats,
+  // buildDashboardStats,
   getActiveCases,
 } from "../../apis/cases";
 import { ui } from "../../libs/ui";
@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Hero } from "../../components/hero/Hero";
 import { Button } from "../../components/buttons/Button";
 import { SlaChip } from "../../components/badges/SlaChip";
-import { StatCard } from "../../components/cards/StatCard";
+// import { StatCard } from "../../components/cards/StatCard";
 import { PageBody } from "../../components/layout/PageBody";
 import { StatusChip } from "../../components/badges/StatusChip";
 import { QuickAccess } from "../../components/cards/QuickAccess";
@@ -60,10 +60,10 @@ export function HomePage() {
     return pageCases.filter((item) => mapPriority(item.Priority) === priority);
   }, [pageCases, priority]);
 
-  const dashboardStats = useMemo(
-    () => buildDashboardStats(pageCases),
-    [pageCases]
-  );
+  // const dashboardStats = useMemo(
+  //   () => buildDashboardStats(pageCases),
+  //   [pageCases]
+  // );
 
   const canGoPrevious = currentPage > 1 && !loading;
   const canGoNext =
@@ -74,11 +74,11 @@ export function HomePage() {
       <Hero />
       <QuickAccess />
       <PageBody>
-        <div className="mb-5 grid grid-cols-4 gap-3.5 max-[980px]:grid-cols-2 max-[980px]:px-0 max-[640px]:grid-cols-1">
+        {/* <div className="mb-5 grid grid-cols-4 gap-3.5 max-[980px]:grid-cols-2 max-[980px]:px-0 max-[640px]:grid-cols-1">
           {dashboardStats.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 items-start gap-[18px]">
           <section className={cn(ui.glass, "overflow-hidden rounded-default")}>

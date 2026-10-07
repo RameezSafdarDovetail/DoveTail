@@ -11,6 +11,12 @@ import {
   FormField,
   FormSection,
 } from "./FormPrimitives";
+import {
+  getActiveAccounts,
+  getCustomerProduct,
+  type ActiveAccount,
+  type CustomerProduct,
+} from "../../apis/accounts";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
@@ -18,12 +24,6 @@ import { createCase } from "../../apis/cases";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
-import {
-  getActiveAccounts,
-  getCustomerProduct,
-  type ActiveAccount,
-  type CustomerProduct,
-} from "../../apis/accounts";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 const priorityOptions = [
@@ -54,6 +54,7 @@ export function LogCaseModal() {
   const open = modal.name === "log-case";
   const userEmail = user?.Email ?? "";
   const contactId = user?.ContactId ?? "";
+  const userName = user?.Name ?? "";
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
@@ -64,7 +65,7 @@ export function LogCaseModal() {
   const [products, setProducts] = useState<CustomerProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [productsLoading, setProductsLoading] = useState(false);
-  const [personResponsible, setPersonResponsible] = useState(userEmail);
+  const [personResponsible, setPersonResponsible] = useState(userName);
   const responsibleRef = useRef<HTMLInputElement>(null);
 
   const subcategoryOptions = useMemo(
@@ -82,14 +83,22 @@ export function LogCaseModal() {
     setSubmitting(false);
     setSelectedAccount("");
     setSelectedProduct("");
-    setPersonResponsible(userEmail);
+    setPersonResponsible(userName);
 
     let cancelled = false;
 
     async function loadAccounts() {
+      if (!contactId) {
+        setAccounts([]);
+        setSelectedAccount("");
+        setAccountsLoading(false);
+        setStatus("Missing contact id. Please sign in again.");
+        return;
+      }
+
       setAccountsLoading(true);
       try {
-        const data = await getActiveAccounts();
+        const data = await getActiveAccounts(contactId);
         if (!cancelled) {
           setAccounts(data);
           setSelectedAccount(data[0]?.Id ?? "");
@@ -144,7 +153,7 @@ export function LogCaseModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, userEmail, contactId]);
+  }, [open, userName, userEmail, contactId]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

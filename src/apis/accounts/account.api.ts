@@ -1,8 +1,12 @@
 import { apiRequest } from "../index";
 import type { ActiveAccount, CustomerProduct } from "./account.types";
 
-export async function getActiveAccounts() {
-  return apiRequest<ActiveAccount[]>("GetActiveAccounts", { method: "GET" });
+export async function getActiveAccounts(contactId: string) {
+  const data = await apiRequest<ActiveAccount | ActiveAccount[]>(
+    `GetActiveAccounts/${encodeURIComponent(contactId)}`,
+    { method: "GET" }
+  );
+  return Array.isArray(data) ? data : data ? [data] : [];
 }
 
 export async function getCustomerProduct(contactId: string) {
