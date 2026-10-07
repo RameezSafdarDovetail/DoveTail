@@ -239,7 +239,7 @@ export function LogCaseModal() {
                 ref={responsibleRef}
                 id="case-person-responsible"
                 name="personResponsible"
-                type="email"
+                type="text"
                 value={personResponsible}
                 onChange={(event) => setPersonResponsible(event.target.value)}
                 className={ui.fieldControl}
