@@ -114,13 +114,6 @@ export function ChangeRequestModal() {
       return;
     }
 
-    if (attachment instanceof File && attachment.size > 0) {
-      if (!attachment.type.startsWith("image/")) {
-        setStatus("Please select an image file only.");
-        return;
-      }
-    }
-
     const payload = new FormData();
     payload.append("CaseId", selectedCase.CaseId);
     payload.append("linkedCase", selectedCase.CaseNumber);
@@ -327,10 +320,11 @@ export function ChangeRequestModal() {
                 id="cr-attachments"
                 name="attachments"
                 type="file"
-                accept="image/*"
                 className={ui.fileInput}
               />
-              <FormHelp>One image only (any image type).</FormHelp>
+              <FormHelp>
+                Any file type, such as PDF, Excel, or other documents.
+              </FormHelp>
             </FormField>
             <FormField full>
               <FormLabel htmlFor="cr-current-process" required>

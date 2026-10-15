@@ -13,9 +13,9 @@ import {
 } from "./FormPrimitives";
 import {
   getActiveAccounts,
-  getCustomerProduct,
+  // getCustomerProduct,
   type ActiveAccount,
-  type CustomerProduct,
+  // type CustomerProduct,
 } from "../../apis/accounts";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
@@ -33,20 +33,32 @@ const priorityOptions = [
 ] as const;
 
 const FALLBACK_PRODUCT_NAMES = [
-  "FreightWare TMS",
-  "HoneyComb WMS",
-  "Infios 3PL WMS",
-  "MobileControl ePOD",
+  "Aptean WMS",
   "eDocs",
+  "eXpressLink",
+  "eXpressWay",
+  "FreightWare Enterprise V7",
+  "FreightWare Lite",
+  "FreightWare Online",
+  "FreightWare TMS",
+  "FreightWare TMS V6",
+  "Full Truck Load Solution",
+  "HoneyComb WMS",
+  "Honeycomb WMS",
+  "Infios 3PL WMS",
+  "Infios WMS",
+  "MobileControl",
+  "MobileControl ePOD",
+  "UTrackIT",
 ] as const;
 
-function getCrmProductName(products: CustomerProduct[]) {
-  for (const product of products) {
-    const name = product.ProductName?.trim();
-    if (name) return name;
-  }
-  return null;
-}
+// function getCrmProductName(products: CustomerProduct[]) {
+//   for (const product of products) {
+//     const name = product.ProductName?.trim();
+//     if (name) return name;
+//   }
+//   return null;
+// }
 
 export function LogCaseModal() {
   const { user } = useAuth();
@@ -62,9 +74,9 @@ export function LogCaseModal() {
   const [accounts, setAccounts] = useState<ActiveAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
   const [accountsLoading, setAccountsLoading] = useState(false);
-  const [products, setProducts] = useState<CustomerProduct[]>([]);
+  // const [products, setProducts] = useState<CustomerProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
-  const [productsLoading, setProductsLoading] = useState(false);
+  // const [productsLoading, setProductsLoading] = useState(false);
   const [personResponsible, setPersonResponsible] = useState(userName);
   const responsibleRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +85,7 @@ export function LogCaseModal() {
     [category]
   );
 
-  const crmProductName = useMemo(() => getCrmProductName(products), [products]);
+  // const crmProductName = useMemo(() => getCrmProductName(products), [products]);
 
   useEffect(() => {
     if (!open) return;
@@ -116,37 +128,37 @@ export function LogCaseModal() {
       }
     }
 
-    async function loadProducts() {
-      if (!contactId) {
-        setProducts([]);
-        setSelectedProduct("");
-        setProductsLoading(false);
-        setStatus("Missing contact id. Please sign in again.");
-        return;
-      }
-
-      setProductsLoading(true);
-      try {
-        const data = await getCustomerProduct(contactId);
-        if (!cancelled) {
-          setProducts(data);
-          setSelectedProduct(getCrmProductName(data) ?? "");
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setProducts([]);
-          setSelectedProduct("");
-          setStatus(
-            error instanceof Error ? error.message : "Failed to load products"
-          );
-        }
-      } finally {
-        if (!cancelled) setProductsLoading(false);
-      }
-    }
+    // async function loadProducts() {
+    //   if (!contactId) {
+    //     setProducts([]);
+    //     setSelectedProduct("");
+    //     setProductsLoading(false);
+    //     setStatus("Missing contact id. Please sign in again.");
+    //     return;
+    //   }
+    //
+    //   setProductsLoading(true);
+    //   try {
+    //     const data = await getCustomerProduct(contactId);
+    //     if (!cancelled) {
+    //       setProducts(data);
+    //       setSelectedProduct(getCrmProductName(data) ?? "");
+    //     }
+    //   } catch (error) {
+    //     if (!cancelled) {
+    //       setProducts([]);
+    //       setSelectedProduct("");
+    //       setStatus(
+    //         error instanceof Error ? error.message : "Failed to load products"
+    //       );
+    //     }
+    //   } finally {
+    //     if (!cancelled) setProductsLoading(false);
+    //   }
+    // }
 
     void loadAccounts();
-    void loadProducts();
+    // void loadProducts();
 
     const timer = window.setTimeout(() => responsibleRef.current?.focus(), 40);
     return () => {
@@ -162,13 +174,6 @@ export function LogCaseModal() {
     const form = new FormData(event.currentTarget);
     const selectedCategory = String(form.get("category") ?? "");
     const attachment = form.get("attachments");
-
-    if (attachment instanceof File && attachment.size > 0) {
-      if (!attachment.type.startsWith("image/")) {
-        setStatus("Please select an image file only.");
-        return;
-      }
-    }
 
     const payload = new FormData();
     payload.append("subject", String(form.get("subject") ?? ""));
@@ -293,54 +298,22 @@ export function LogCaseModal() {
               <FormLabel htmlFor="case-product" required>
                 Product
               </FormLabel>
-              {productsLoading ? (
-                <input
-                  id="case-product"
-                  type="text"
-                  readOnly
-                  value="Loading products…"
-                  className={ui.fieldControl}
-                />
-              ) : products.length === 0 ? (
-                <input
-                  id="case-product"
-                  type="text"
-                  readOnly
-                  value="No products available"
-                  className={ui.fieldControl}
-                />
-              ) : crmProductName ? (
-                <input
-                  id="case-product"
-                  name="product"
-                  type="text"
-                  readOnly
-                  required
-                  value={crmProductName}
-                  className={ui.fieldControl}
-                />
-              ) : (
-                <select
-                  id="case-product"
-                  name="product"
-                  required
-                  value={selectedProduct}
-                  onChange={(event) => setSelectedProduct(event.target.value)}
-                  className={cn(ui.fieldControlWhite, "cursor-pointer")}
-                >
-                  <option value="">-- Select product --</option>
-                  {FALLBACK_PRODUCT_NAMES.map((productName) => (
-                    <option key={productName} value={productName}>
-                      {productName}
-                    </option>
-                  ))}
-                </select>
-              )}
-              <FormHelp>
-                {crmProductName
-                  ? "Product assigned from CRM."
-                  : "Select the product for this case."}
-              </FormHelp>
+              <select
+                id="case-product"
+                name="product"
+                required
+                value={selectedProduct}
+                onChange={(event) => setSelectedProduct(event.target.value)}
+                className={cn(ui.fieldControlWhite, "cursor-pointer")}
+              >
+                <option value="">-- Select product --</option>
+                {FALLBACK_PRODUCT_NAMES.map((productName) => (
+                  <option key={productName} value={productName}>
+                    {productName}
+                  </option>
+                ))}
+              </select>
+              <FormHelp>Select the product for this case.</FormHelp>
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-environment" required>
@@ -466,10 +439,11 @@ export function LogCaseModal() {
                 id="case-attachments"
                 name="attachments"
                 type="file"
-                accept="image/*"
                 className={ui.fileInput}
               />
-              <FormHelp>One image only (any image type).</FormHelp>
+              <FormHelp>
+                Any file type, such as PDF, Excel, or other documents.
+              </FormHelp>
             </FormField>
           </FormGrid>
         </div>
