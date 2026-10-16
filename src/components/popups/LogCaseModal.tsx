@@ -33,22 +33,21 @@ const priorityOptions = [
 ] as const;
 
 const FALLBACK_PRODUCT_NAMES = [
-  "Aptean WMS",
+  "Aptean",
+  "eBusiness",
   "eDocs",
+  "eXplore",
   "eXpressLink",
   "eXpressWay",
-  "FreightWare Enterprise V7",
-  "FreightWare Lite",
+  "FreightWare Enterprise",
   "FreightWare Online",
-  "FreightWare TMS",
-  "FreightWare TMS V6",
+  "FreightWare V6",
   "Full Truck Load Solution",
-  "HoneyComb WMS",
-  "Honeycomb WMS",
-  "Infios 3PL WMS",
-  "Infios WMS",
-  "MobileControl",
-  "MobileControl ePOD",
+  "HoneyComb",
+  "Internal Work",
+  "K.Motion Enterprise",
+  "MobileControl new",
+  "Other",
   "UTrackIT",
 ] as const;
 
