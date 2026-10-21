@@ -5,8 +5,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { escalateCase } from "../../apis/cases";
 import type { ActiveCase } from "../../apis/cases";
 import { FormField, FormLabel } from "./FormPrimitives";
-import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
+import { refreshCaseLists } from "../../libs/queryClient";
 import { useEffect, useState, type FormEvent } from "react";
+import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 
 interface EscalateCaseModalProps {
   caseItem: ActiveCase | null;
@@ -68,6 +69,7 @@ export function EscalateCaseModal({
         EscalatedByContactId: contactId,
       });
       setStatus("Case escalated successfully.");
+      void refreshCaseLists();
       onSuccess?.();
     } catch (error) {
       setStatus(
@@ -132,7 +134,11 @@ export function EscalateCaseModal({
         </div>
         <ModalStatus>{status}</ModalStatus>
         <ModalActions>
-          <Button variant="secondary" onClick={closeModal} disabled={submitting}>
+          <Button
+            variant="secondary"
+            onClick={closeModal}
+            disabled={submitting}
+          >
             Cancel
           </Button>
           <Button variant="primary" type="submit" disabled={submitting}>

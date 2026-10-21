@@ -9,3 +9,19 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+const caseListQueryKeys = [
+  ["active-cases"],
+  ["closed-cases"],
+  ["all-cases"],
+  ["cases"],
+] as const;
+
+/** Refetch every cached case list after a create or update. */
+export function refreshCaseLists() {
+  return Promise.all(
+    caseListQueryKeys.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey })
+    )
+  );
+}

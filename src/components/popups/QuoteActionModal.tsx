@@ -2,6 +2,7 @@ import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
 import { useState, type FormEvent } from "react";
+import { refreshCaseLists } from "../../libs/queryClient";
 import { FormField, FormHelp, FormLabel } from "./FormPrimitives";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { acceptQuote, rejectQuote, type QuoteItem } from "../../apis/quotes";
@@ -67,6 +68,7 @@ export function QuoteActionModal({
       try {
         await acceptQuote(payload);
         setStatus("Quote accepted successfully.");
+        void refreshCaseLists();
         onSuccess?.();
       } catch (error) {
         setStatus(
@@ -93,6 +95,7 @@ export function QuoteActionModal({
         RejectionComments: rejectionComments.trim(),
       });
       setStatus("Quote rejected successfully.");
+      void refreshCaseLists();
       onSuccess?.();
     } catch (error) {
       setStatus(

@@ -44,6 +44,21 @@ export function formatAvgAge(minutes: number): string {
   return `${Math.round(minutes)}m`;
 }
 
+/** Newest CreatedOn first. Invalid dates sort last. */
+export function compareCreatedOnDesc(
+  a: { CreatedOn: string },
+  b: { CreatedOn: string }
+) {
+  const aTime = new Date(a.CreatedOn).getTime();
+  const bTime = new Date(b.CreatedOn).getTime();
+  const aValid = Number.isFinite(aTime);
+  const bValid = Number.isFinite(bTime);
+  if (aValid && bValid) return bTime - aTime;
+  if (aValid) return -1;
+  if (bValid) return 1;
+  return 0;
+}
+
 export function formatCaseDate(iso: string) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";

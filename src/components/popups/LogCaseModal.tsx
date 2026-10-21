@@ -23,6 +23,7 @@ import { Button } from "../buttons/Button";
 import { createCase } from "../../apis/cases";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
+import { refreshCaseLists } from "../../libs/queryClient";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
@@ -202,6 +203,7 @@ export function LogCaseModal() {
     try {
       await createCase(payload);
       setStatus("Case created successfully");
+      void refreshCaseLists();
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "Failed to create case"
@@ -280,9 +282,7 @@ export function LogCaseModal() {
               <FormHelp>CRM-authorized accounts only.</FormHelp>
             </FormField>
             <FormField>
-              <FormLabel htmlFor="case-client-ref">
-                Client reference / Freshdesk reference
-              </FormLabel>
+              <FormLabel htmlFor="case-client-ref">Client reference</FormLabel>
               <input
                 id="case-client-ref"
                 name="clientReference"
@@ -333,7 +333,7 @@ export function LogCaseModal() {
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-category" required>
-                Type
+                Category
               </FormLabel>
               <select
                 id="case-category"

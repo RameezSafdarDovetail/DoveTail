@@ -15,23 +15,28 @@ import {
 import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useModal } from "../../hooks/useModal";
+import { refreshCaseLists } from "../../libs/queryClient";
 import { cn, normalizeCaseNumber } from "../../libs/utils";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
-const SUPPORTING_DOC_OPTIONS = [
-  { value: 1, label: "Screenshot of the required change" },
-  { value: 2, label: "Client report example" },
-  { value: 3, label: "Excel report example / mock-up" },
-  { value: 4, label: "Other" },
-] as const;
+// const SUPPORTING_DOC_OPTIONS = [
+//   { value: 1, label: "Screenshot of the required change" },
+//   { value: 2, label: "Client report example" },
+//   { value: 3, label: "Excel report example / mock-up" },
+//   { value: 4, label: "Other" },
+// ] as const;
 
 export function ChangeRequestModal() {
   const { modal, closeModal } = useModal();
   const open = modal.name === "change-request";
-  const caseSelectRef = useRef<HTMLSelectElement>(null);
+  const caseMenuRef = useRef<HTMLDivElement>(null);
+  const caseSelectRef = useRef<HTMLInputElement>(null);
   const [linkedCase, setLinkedCase] = useState("");
-  const [approvedAt, setApprovedAt] = useState("Not approved yet");
+  const [caseQuery, setCaseQuery] = useState("");
+  const [caseMenuOpen, setCaseMenuOpen] = useState(false);
+  const [activeOption, setActiveOption] = useState(0);
+  // const [approvedAt, setApprovedAt] = useState("Not approved yet");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cases, setCases] = useState<CaseChangeRequestInfo[]>([]);
@@ -42,12 +47,21 @@ export function ChangeRequestModal() {
     [cases, linkedCase]
   );
 
+  const filteredCases = useMemo(() => {
+    const term = caseQuery.trim().toLowerCase();
+    if (!term) return cases;
+    return cases.filter((item) => item.CaseNumber.toLowerCase().includes(term));
+  }, [cases, caseQuery]);
+
   useEffect(() => {
     if (!open) return;
     setStatus("");
     setSubmitting(false);
-    setApprovedAt("Not approved yet");
+    // setApprovedAt("Not approved yet");
     setLinkedCase("");
+    setCaseQuery("");
+    setCaseMenuOpen(false);
+    setActiveOption(0);
     setCases([]);
 
     let cancelled = false;
@@ -68,6 +82,7 @@ export function ChangeRequestModal() {
             item.CaseId === modal.caseNumber
         );
         setLinkedCase(match?.CaseNumber ?? "");
+        setCaseQuery(match?.CaseNumber ?? "");
       } catch (error) {
         if (!cancelled) {
           setCases([]);
@@ -90,6 +105,36 @@ export function ChangeRequestModal() {
       window.clearTimeout(timer);
     };
   }, [modal.caseNumber, open]);
+
+  useEffect(() => {
+    if (!caseMenuOpen) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (!caseMenuRef.current?.contains(event.target as Node)) {
+        setCaseMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [caseMenuOpen]);
+
+  function selectCase(caseNumber: string) {
+    setLinkedCase(caseNumber);
+    setCaseQuery(caseNumber);
+    setCaseMenuOpen(false);
+    setActiveOption(0);
+  }
+
+  function onCaseQueryChange(value: string) {
+    setCaseQuery(value);
+    setCaseMenuOpen(true);
+    setActiveOption(0);
+    const match = cases.find(
+      (item) => item.CaseNumber.toLowerCase() === value.trim().toLowerCase()
+    );
+    setLinkedCase(match?.CaseNumber ?? "");
+  }
 
   // function approveChangeRequest() {
   //   const approver = document.getElementById(
@@ -139,6 +184,7 @@ export function ChangeRequestModal() {
     try {
       await createChangeRequest(payload);
       setStatus("Change request submitted successfully");
+      void refreshCaseLists();
     } catch (error) {
       setStatus(
         error instanceof Error
@@ -162,32 +208,113 @@ export function ChangeRequestModal() {
         <div className={ui.formBody}>
           <FormGrid>
             <FormSection>Linked Case Information</FormSection>
-            <FormField>
+            <FormField className={caseMenuOpen ? "relative z-30" : undefined}>
               <FormLabel htmlFor="cr-linked-case" required>
                 Linked case number
               </FormLabel>
-              <select
-                ref={caseSelectRef}
-                id="cr-linked-case"
-                name="linkedCase"
-                required
-                disabled={casesLoading || cases.length === 0}
-                value={linkedCase}
-                onChange={(event) => setLinkedCase(event.target.value)}
-                className={cn(
-                  ui.fieldControl,
-                  "cursor-pointer !border-[rgba(26,86,219,0.35)] !bg-[#f8fbff]"
-                )}
-              >
-                <option value="">
-                  {casesLoading ? "Loading cases…" : "-- Select case number --"}
-                </option>
-                {cases.map((item) => (
-                  <option key={item.CaseId} value={item.CaseNumber}>
-                    {item.CaseNumber}
-                  </option>
-                ))}
-              </select>
+              <div ref={caseMenuRef} className="relative">
+                <input
+                  ref={caseSelectRef}
+                  id="cr-linked-case"
+                  name="linkedCase"
+                  type="text"
+                  role="combobox"
+                  aria-expanded={caseMenuOpen}
+                  aria-controls="cr-linked-case-list"
+                  aria-autocomplete="list"
+                  autoComplete="off"
+                  required
+                  disabled={casesLoading || cases.length === 0}
+                  placeholder={
+                    casesLoading
+                      ? "Loading cases…"
+                      : cases.length === 0
+                      ? "No cases available"
+                      : "Type a case number"
+                  }
+                  value={caseQuery}
+                  onChange={(event) => onCaseQueryChange(event.target.value)}
+                  onFocus={(event) => {
+                    event.currentTarget.select();
+                    if (!casesLoading && cases.length > 0)
+                      setCaseMenuOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setCaseMenuOpen(true);
+                      setActiveOption((current) =>
+                        filteredCases.length === 0
+                          ? 0
+                          : (current + 1) % filteredCases.length
+                      );
+                      return;
+                    }
+                    if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setCaseMenuOpen(true);
+                      setActiveOption((current) =>
+                        filteredCases.length === 0
+                          ? 0
+                          : (current - 1 + filteredCases.length) %
+                            filteredCases.length
+                      );
+                      return;
+                    }
+                    if (
+                      event.key === "Enter" &&
+                      caseMenuOpen &&
+                      filteredCases[activeOption]
+                    ) {
+                      event.preventDefault();
+                      selectCase(filteredCases[activeOption].CaseNumber);
+                      return;
+                    }
+                    if (event.key === "Escape") {
+                      setCaseMenuOpen(false);
+                    }
+                  }}
+                  className={cn(
+                    ui.fieldControl,
+                    "cursor-text !border-[rgba(26,86,219,0.35)] !bg-[#f8fbff]"
+                  )}
+                />
+                {caseMenuOpen && !casesLoading && cases.length > 0 ? (
+                  <ul
+                    id="cr-linked-case-list"
+                    role="listbox"
+                    className="absolute top-[calc(100%+6px)] right-0 left-0 z-30 max-h-48 overflow-y-auto rounded-[9px] border border-white/56 bg-white py-1 shadow-card"
+                  >
+                    {filteredCases.length === 0 ? (
+                      <li className="px-3.5 py-2 text-[13px] text-text-3">
+                        No matching case numbers
+                      </li>
+                    ) : (
+                      filteredCases.map((item, index) => (
+                        <li key={item.CaseId} role="presentation">
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={item.CaseNumber === linkedCase}
+                            className={cn(
+                              "flex w-full cursor-pointer items-center px-3.5 py-2 text-left font-sans text-[13px] font-medium text-text-2 hover:bg-accent-soft hover:text-accent",
+                              (item.CaseNumber === linkedCase ||
+                                index === activeOption) &&
+                                "bg-accent-soft text-accent"
+                            )}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onMouseEnter={() => setActiveOption(index)}
+                            onClick={() => selectCase(item.CaseNumber)}
+                          >
+                            {item.CaseNumber}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                ) : null}
+              </div>
+              <FormHelp>Type a case number to narrow the list.</FormHelp>
             </FormField>
             <FormField>
               <FormLabel htmlFor="cr-number">Change Request Number</FormLabel>
@@ -200,7 +327,7 @@ export function ChangeRequestModal() {
                 className={ui.fieldControl}
               />
             </FormField>
-            <FormField full>
+            {/* <FormField full>
               <FormLabel htmlFor="cr-case-info">Linked case details</FormLabel>
               <textarea
                 id="cr-case-info"
@@ -212,7 +339,7 @@ export function ChangeRequestModal() {
               <FormHelp locked>
                 Greyed out because this comes from the linked CRM case.
               </FormHelp>
-            </FormField>
+            </FormField> */}
             <FormField>
               <FormLabel htmlFor="cr-requester-email">
                 Requester email
@@ -270,7 +397,7 @@ export function ChangeRequestModal() {
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
             </FormField>
-            <FormField full>
+            {/* <FormField full>
               <FormLabel htmlFor="cr-impacted" required>
                 Other areas impacted by the change
               </FormLabel>
@@ -281,8 +408,8 @@ export function ChangeRequestModal() {
                 required
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
-            </FormField>
-            <FormField full>
+            </FormField> */}
+            {/* <FormField full>
               <FormLabel required>Supporting documents</FormLabel>
               <div className="grid grid-cols-2 gap-x-3.5 gap-y-2 py-2 max-[640px]:grid-cols-1">
                 {SUPPORTING_DOC_OPTIONS.map((option, index) => (
@@ -301,7 +428,7 @@ export function ChangeRequestModal() {
                   </label>
                 ))}
               </div>
-            </FormField>
+            </FormField> */}
             <FormField full>
               <FormLabel htmlFor="cr-other-docs">
                 If Other, please specify
@@ -326,7 +453,7 @@ export function ChangeRequestModal() {
                 Any file type, such as PDF, Excel, or other documents.
               </FormHelp>
             </FormField>
-            <FormField full>
+            {/* <FormField full>
               <FormLabel htmlFor="cr-current-process" required>
                 Current process used to handle the requested change
               </FormLabel>
@@ -337,7 +464,7 @@ export function ChangeRequestModal() {
                 required
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
-            </FormField>
+            </FormField> */}
             <FormField full>
               <FormLabel htmlFor="cr-justification" required>
                 Justification for change request
@@ -351,7 +478,7 @@ export function ChangeRequestModal() {
               />
             </FormField>
 
-            <FormSection>Approval Workflow</FormSection>
+            {/* <FormSection>Approval Workflow</FormSection>
             <FormNote>
               Change Requests can be submitted before approval. Approval is
               captured as a separate workflow step using email address and
@@ -371,9 +498,9 @@ export function ChangeRequestModal() {
                     className={ui.fieldControl}
                   />
                 </FormField>
-                {/* <Button variant="secondary" onClick={approveChangeRequest}>
+                <Button variant="secondary" onClick={approveChangeRequest}>
                   Approve
-                </Button> */}
+                </Button>
               </div>
               <FormField className="mt-2.5">
                 <FormLabel htmlFor="cr-approved-at">
@@ -388,7 +515,7 @@ export function ChangeRequestModal() {
                   className={ui.fieldControl}
                 />
               </FormField>
-            </div>
+            </div> */}
           </FormGrid>
         </div>
         <ModalActions>

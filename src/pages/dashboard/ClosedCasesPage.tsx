@@ -2,6 +2,7 @@ import {
   getClosedCases,
   formatCaseDate,
   mapPriorityType,
+  compareCreatedOnDesc,
   mapCatalogStatusLabel,
   matchesCreatedOnRange,
 } from "../../apis/cases";
@@ -34,14 +35,14 @@ export function ClosedCasesPage() {
   const [endDateTime, setEndDateTime] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isFetching, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["closed-cases", contactId, page, PAGE_SIZE],
     queryFn: () => getClosedCases(contactId, page, PAGE_SIZE),
     enabled: Boolean(contactId),
   });
 
   const missingContactId = !contactId;
-  const loading = !missingContactId && (isLoading || isFetching);
+  const loading = !missingContactId && isLoading;
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
@@ -50,7 +51,7 @@ export function ClosedCasesPage() {
       : "Failed to load closed cases"
     : "";
 
-  const pageCases = loading ? [] : data?.Data ?? [];
+  const pageCases = data?.Data ?? [];
   const totalPages = data?.TotalPages ?? 0;
   const hasMore = data?.HasMore ?? false;
   const currentPage = data?.Page ?? page;
@@ -58,22 +59,24 @@ export function ClosedCasesPage() {
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return pageCases.filter((item) => {
-      if (!matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)) {
-        return false;
-      }
-      if (!term) return true;
-      const title = item.Title ?? "";
-      const type = mapPriorityType(item.Priority);
-      const resolution = mapCatalogStatusLabel(item.Status);
-      return (
-        item.CaseNumber.toLowerCase().includes(term) ||
-        title.toLowerCase().includes(term) ||
-        type.toLowerCase().includes(term) ||
-        item.Priority.toLowerCase().includes(term) ||
-        resolution.toLowerCase().includes(term)
-      );
-    });
+    return pageCases
+      .filter((item) => {
+        if (!matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)) {
+          return false;
+        }
+        if (!term) return true;
+        const title = item.Title ?? "";
+        const type = mapPriorityType(item.Priority);
+        const resolution = mapCatalogStatusLabel(item.Status);
+        return (
+          item.CaseNumber.toLowerCase().includes(term) ||
+          title.toLowerCase().includes(term) ||
+          type.toLowerCase().includes(term) ||
+          item.Priority.toLowerCase().includes(term) ||
+          resolution.toLowerCase().includes(term)
+        );
+      })
+      .sort(compareCreatedOnDesc);
   }, [pageCases, query, startDateTime, endDateTime]);
 
   const canGoPrevious = currentPage > 1 && !loading;

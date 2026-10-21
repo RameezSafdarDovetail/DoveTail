@@ -5,6 +5,7 @@ import {
   mapCatalogStatus,
   matchesCaseSearch,
   mapCatalogStatusLabel,
+  compareCreatedOnDesc,
   matchesCreatedOnRange,
 } from "../../apis/cases";
 import { useMemo, useState } from "react";
@@ -48,14 +49,14 @@ export function AllCasesPage() {
   const [endDateTime, setEndDateTime] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isFetching, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["all-cases", contactId, page, PAGE_SIZE],
     queryFn: () => getAllCases(contactId, page, PAGE_SIZE),
     enabled: Boolean(contactId),
   });
 
   const missingContactId = !contactId;
-  const loading = !missingContactId && (isLoading || isFetching);
+  const loading = !missingContactId && isLoading;
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
@@ -64,22 +65,24 @@ export function AllCasesPage() {
       : "Failed to load cases"
     : "";
 
-  const pageCases = loading ? [] : data?.Data ?? [];
+  const pageCases = data?.Data ?? [];
   const totalPages = data?.TotalPages ?? 0;
   const hasMore = data?.HasMore ?? false;
   const currentPage = data?.Page ?? page;
   const totalRecords = data?.TotalRecords ?? 0;
 
   const visible = useMemo(() => {
-    return pageCases.filter((item) => {
-      const catalogStatus = mapCatalogStatus(item.Status);
-      const matchesStatus = status === "all" || catalogStatus === status;
-      return (
-        matchesStatus &&
-        matchesCaseSearch(item, query, searchBy) &&
-        matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
-      );
-    });
+    return pageCases
+      .filter((item) => {
+        const catalogStatus = mapCatalogStatus(item.Status);
+        const matchesStatus = status === "all" || catalogStatus === status;
+        return (
+          matchesStatus &&
+          matchesCaseSearch(item, query, searchBy) &&
+          matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
+        );
+      })
+      .sort(compareCreatedOnDesc);
   }, [pageCases, query, searchBy, status, startDateTime, endDateTime]);
 
   const canGoPrevious = currentPage > 1 && !loading;

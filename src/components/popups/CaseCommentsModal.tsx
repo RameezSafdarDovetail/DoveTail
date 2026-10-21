@@ -16,9 +16,23 @@ import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
+import { refreshCaseLists } from "../../libs/queryClient";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+
+function caseMatchesSearch(item: CaseChangeRequestInfo, term: string) {
+  const query = term.trim().toLowerCase();
+  if (!query) return true;
+  const normalizedTerm = normalizeCaseNumber(query).toLowerCase();
+  const caseNumber = item.CaseNumber.toLowerCase();
+  return (
+    caseNumber.includes(query) ||
+    normalizeCaseNumber(caseNumber).toLowerCase().includes(normalizedTerm) ||
+    (item.LinkedCaseDetails ?? "").toLowerCase().includes(query) ||
+    (item.Account ?? "").toLowerCase().includes(query)
+  );
+}
 
 export function CaseCommentsModal() {
   const { user } = useAuth();
@@ -36,16 +50,10 @@ export function CaseCommentsModal() {
   const [cases, setCases] = useState<CaseChangeRequestInfo[]>([]);
   const [casesLoading, setCasesLoading] = useState(false);
 
-  const filteredCases = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return cases;
-    return cases.filter(
-      (item) =>
-        item.CaseNumber.toLowerCase().includes(term) ||
-        (item.LinkedCaseDetails ?? "").toLowerCase().includes(term) ||
-        (item.Account ?? "").toLowerCase().includes(term)
-    );
-  }, [cases, search]);
+  const filteredCases = useMemo(
+    () => cases.filter((item) => caseMatchesSearch(item, search)),
+    [cases, search]
+  );
 
   const selectedCase = useMemo(
     () => cases.find((item) => item.CaseNumber === linkedCase) ?? null,
@@ -110,7 +118,11 @@ export function CaseCommentsModal() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || !selectedCase) return;
+    if (submitting) return;
+    if (!selectedCase) {
+      setStatus("Please select a case.");
+      return;
+    }
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -137,6 +149,7 @@ export function CaseCommentsModal() {
     try {
       await updateCaseComment(payload);
       setStatus("Comment added successfully");
+      void refreshCaseLists();
       setSubject("");
       setDetail("");
       if (attachmentRef.current) attachmentRef.current.value = "";
@@ -169,7 +182,20 @@ export function CaseCommentsModal() {
                 type="search"
                 placeholder="Search by case number, client reference or keywords"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSearch(value);
+                  setLinkedCase((current) => {
+                    if (!current) return current;
+                    const selected = cases.find(
+                      (item) => item.CaseNumber === current
+                    );
+                    if (!selected || !caseMatchesSearch(selected, value)) {
+                      return "";
+                    }
+                    return current;
+                  });
+                }}
                 className={ui.fieldControl}
               />
             </FormField>
@@ -178,12 +204,13 @@ export function CaseCommentsModal() {
                 Case number
               </FormLabel>
               <select
+                key={search}
                 id="comment-linked-case"
                 required
                 disabled={casesLoading || filteredCases.length === 0}
                 value={linkedCase}
                 onChange={(event) => setLinkedCase(event.target.value)}
-                className={cn(ui.fieldControl, "cursor-pointer")}
+                className={cn(ui.fieldControlWhite, "cursor-pointer")}
               >
                 <option value="">
                   {casesLoading ? "Loading cases…" : "-- Select case number --"}

@@ -1,11 +1,12 @@
 import {
-  mapSla,
+  // mapSla,
   mapPriority,
   getActiveCases,
   type ActiveCase,
   mapCatalogStatus,
   mapPriorityLabel,
   matchesCaseSearch,
+  compareCreatedOnDesc,
   mapCatalogStatusLabel,
   matchesCreatedOnRange,
 } from "../../apis/cases";
@@ -19,8 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
-import { SlaChip } from "../../components/badges/SlaChip";
 import { PageBody } from "../../components/layout/PageBody";
+// import { SlaChip } from "../../components/badges/SlaChip";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchInput } from "../../components/layout/SearchInput";
@@ -61,14 +62,14 @@ export function OpenCasesPage() {
   const [escalateDetailsCase, setEscalateDetailsCase] =
     useState<ActiveCase | null>(null);
 
-  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["active-cases", contactId, page, PAGE_SIZE],
     queryFn: () => getActiveCases(contactId, page, PAGE_SIZE),
     enabled: Boolean(contactId),
   });
 
   const missingContactId = !contactId;
-  const loading = !missingContactId && (isLoading || isFetching);
+  const loading = !missingContactId && isLoading;
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
@@ -77,22 +78,24 @@ export function OpenCasesPage() {
       : "Failed to load open cases"
     : "";
 
-  const pageCases = loading ? [] : data?.Data ?? [];
+  const pageCases = data?.Data ?? [];
   const totalPages = data?.TotalPages ?? 0;
   const hasMore = data?.HasMore ?? false;
   const currentPage = data?.Page ?? page;
   const totalRecords = data?.TotalRecords ?? 0;
 
   const visible = useMemo(() => {
-    return pageCases.filter((item) => {
-      const casePriority = mapPriority(item.Priority);
-      const matchesPriority = priority === "all" || casePriority === priority;
-      return (
-        matchesPriority &&
-        matchesCaseSearch(item, query, searchBy) &&
-        matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
-      );
-    });
+    return pageCases
+      .filter((item) => {
+        const casePriority = mapPriority(item.Priority);
+        const matchesPriority = priority === "all" || casePriority === priority;
+        return (
+          matchesPriority &&
+          matchesCaseSearch(item, query, searchBy) &&
+          matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
+        );
+      })
+      .sort(compareCreatedOnDesc);
   }, [pageCases, priority, query, searchBy, startDateTime, endDateTime]);
 
   const canGoPrevious = currentPage > 1 && !loading;
@@ -192,11 +195,11 @@ export function OpenCasesPage() {
           columnsClassName={tableCols.cases}
           headers={[
             "Case #",
-            "Title & Description",
+            "Title ",
             "Status",
             "Priority",
-            "Age / TAT",
-            "SLA",
+            // "Age / TAT",
+            // "SLA",
             "Actions",
           ]}
         >
@@ -238,12 +241,12 @@ export function OpenCasesPage() {
                     <div className={cn(ui.caseTitle, "truncate")} title={title}>
                       {title}
                     </div>
-                    <div
+                    {/* <div
                       className={cn(ui.caseDesc, "truncate")}
                       title={item.Priority}
                     >
                       {item.Priority}
-                    </div>
+                    </div> */}
                   </div>
                   <div className="min-w-0 overflow-hidden">
                     <Badge
@@ -264,12 +267,12 @@ export function OpenCasesPage() {
                       {mapPriorityLabel(casePriority)}
                     </PriorityBadge>
                   </div>
-                  <span className={cn(ui.tat, "whitespace-nowrap")}>
+                  {/* <span className={cn(ui.tat, "whitespace-nowrap")}>
                     {item.CaseAge ?? "—"}
                   </span>
                   <span className="min-w-0 overflow-hidden">
                     <SlaChip tone={mapSla(item.Sla)}>{item.Sla}</SlaChip>
-                  </span>
+                  </span>  */}
                   <div className="flex items-center justify-center">
                     {item.IsEscalated ? (
                       <button
@@ -336,9 +339,6 @@ export function OpenCasesPage() {
         <EscalateCaseModal
           caseItem={escalateCase}
           onClose={() => setEscalateCase(null)}
-          onSuccess={() => {
-            void refetch();
-          }}
         />
         <EscalateDetailsModal
           caseItem={escalateDetailsCase}

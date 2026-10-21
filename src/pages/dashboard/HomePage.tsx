@@ -1,10 +1,11 @@
 import {
-  mapSla,
+  // mapSla,
   mapStatus,
   mapPriority,
   mapPriorityLabel,
   // buildDashboardStats,
   getActiveCases,
+  compareCreatedOnDesc,
 } from "../../apis/cases";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
@@ -14,7 +15,7 @@ import { useModal } from "../../hooks/useModal";
 import { useQuery } from "@tanstack/react-query";
 import { Hero } from "../../components/hero/Hero";
 import { Button } from "../../components/buttons/Button";
-import { SlaChip } from "../../components/badges/SlaChip";
+// import { SlaChip } from "../../components/badges/SlaChip";
 // import { StatCard } from "../../components/cards/StatCard";
 import { PageBody } from "../../components/layout/PageBody";
 import { StatusChip } from "../../components/badges/StatusChip";
@@ -33,14 +34,14 @@ export function HomePage() {
   const [priority, setPriority] = useState<CasePriority | "all">("all");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isFetching, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["active-cases", contactId, page, PAGE_SIZE],
     queryFn: () => getActiveCases(contactId, page, PAGE_SIZE),
     enabled: Boolean(contactId),
   });
 
   const missingContactId = !contactId;
-  const loading = !missingContactId && (isLoading || isFetching);
+  const loading = !missingContactId && isLoading;
   const errorMessage = missingContactId
     ? "Missing contact id. Please sign in again."
     : isError
@@ -49,15 +50,18 @@ export function HomePage() {
       : "Failed to load active cases"
     : "";
 
-  const pageCases = loading ? [] : data?.Data ?? [];
+  const pageCases = data?.Data ?? [];
   const totalPages = data?.TotalPages ?? 0;
   const hasMore = data?.HasMore ?? false;
   const currentPage = data?.Page ?? page;
   const totalRecords = data?.TotalRecords ?? 0;
 
   const visibleCases = useMemo(() => {
-    if (priority === "all") return pageCases;
-    return pageCases.filter((item) => mapPriority(item.Priority) === priority);
+    const filtered =
+      priority === "all"
+        ? pageCases
+        : pageCases.filter((item) => mapPriority(item.Priority) === priority);
+    return [...filtered].sort(compareCreatedOnDesc);
   }, [pageCases, priority]);
 
   // const dashboardStats = useMemo(
@@ -128,8 +132,8 @@ export function HomePage() {
                 <span>Priority</span>
                 <span>Case</span>
                 <span>Status</span>
-                <span>Age</span>
-                <span>SLA</span>
+                {/* <span>Age</span>
+                <span>SLA</span> */}
               </div>
               <div
                 className={cn(ui.tableScrollBody, "max-[980px]:min-w-[680px]")}
@@ -153,7 +157,7 @@ export function HomePage() {
                   visibleCases.map((item) => {
                     const casePriority = mapPriority(item.Priority);
                     const status = mapStatus(item.Status);
-                    const slaTone = mapSla(item.Sla);
+                    // const slaTone = mapSla(item.Sla);
 
                     return (
                       <div
@@ -177,10 +181,10 @@ export function HomePage() {
                             {status.label}
                           </StatusChip>
                         </span>
-                        <span>{item.CaseAge ?? "—"}</span>
+                        {/* <span>{item.CaseAge ?? "—"}</span>
                         <span>
                           <SlaChip tone={slaTone}>{item.Sla}</SlaChip>
-                        </span>
+                        </span> */}
                       </div>
                     );
                   })}
