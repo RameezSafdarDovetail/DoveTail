@@ -1,7 +1,18 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { useEscapeKey } from './useEscapeKey';
+import { useEscapeKey } from "./useEscapeKey";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
-export type ModalName = 'log-case' | 'change-request' | 'case-comments' | 'case-detail';
+export type ModalName =
+  | "log-case"
+  | "change-request"
+  | "case-comments"
+  | "case-detail";
 
 interface ModalState {
   name: ModalName | null;
@@ -24,18 +35,18 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [modal, setModal] = useState<ModalState>({ name: null });
 
   const closeModal = useCallback(() => setModal({ name: null }), []);
-  const openLogCase = useCallback(() => setModal({ name: 'log-case' }), []);
+  const openLogCase = useCallback(() => setModal({ name: "log-case" }), []);
   const openChangeRequest = useCallback(
-    (caseNumber?: string) => setModal({ name: 'change-request', caseNumber }),
-    [],
+    (caseNumber?: string) => setModal({ name: "change-request", caseNumber }),
+    []
   );
   const openCaseComments = useCallback(
-    (caseNumber?: string) => setModal({ name: 'case-comments', caseNumber }),
-    [],
+    (caseNumber?: string) => setModal({ name: "case-comments", caseNumber }),
+    []
   );
   const openCaseDetail = useCallback(
-    (caseId: string) => setModal({ name: 'case-detail', caseId }),
-    [],
+    (caseId: string) => setModal({ name: "case-detail", caseId }),
+    []
   );
 
   useEscapeKey(closeModal, Boolean(modal.name));
@@ -49,14 +60,23 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       openCaseDetail,
       closeModal,
     }),
-    [modal, openLogCase, openChangeRequest, openCaseComments, openCaseDetail, closeModal],
+    [
+      modal,
+      openLogCase,
+      openChangeRequest,
+      openCaseComments,
+      openCaseDetail,
+      closeModal,
+    ]
   );
 
-  return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
+  return (
+    <ModalContext.Provider value={value}>{children}</ModalContext.Provider>
+  );
 }
 
 export function useModal() {
   const context = useContext(ModalContext);
-  if (!context) throw new Error('useModal must be used within ModalProvider');
+  if (!context) throw new Error("useModal must be used within ModalProvider");
   return context;
 }

@@ -61,7 +61,9 @@ export function ClosedCasesPage() {
     const term = query.trim().toLowerCase();
     return pageCases
       .filter((item) => {
-        if (!matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)) {
+        if (
+          !matchesCreatedOnRange(item.CreatedOn, startDateTime, endDateTime)
+        ) {
           return false;
         }
         if (!term) return true;
@@ -102,7 +104,7 @@ export function ClosedCasesPage() {
                     "Type",
                     "Subject",
                     "Resolution",
-                    "Closed",
+                    "Resolution Date",
                   ],
                   rows: visible.map((item) => [
                     item.CaseNumber,
@@ -110,7 +112,7 @@ export function ClosedCasesPage() {
                     mapPriorityType(item.Priority),
                     item.Priority,
                     mapCatalogStatusLabel(item.Status),
-                    formatCaseDate(item.CreatedOn),
+                    formatCaseDate(item.ResolutionDate ?? "", true),
                   ]),
                 })
               }
@@ -167,7 +169,7 @@ export function ClosedCasesPage() {
             "Type",
             "Subject",
             "Resolution",
-            "Closed",
+            "Resolution Date",
           ]}
         >
           {loading ? (
@@ -208,12 +210,12 @@ export function ClosedCasesPage() {
                     <div className={cn(ui.caseTitle, "truncate")} title={title}>
                       {title}
                     </div>
-                    <div
+                    {/* <div
                       className={cn(ui.caseSub, "truncate")}
                       title={item.Priority}
                     >
                       Re: {item.Priority}
-                    </div>
+                    </div> */}
                   </div>
                   <div className="min-w-0">
                     <Pill>{type}</Pill>
@@ -228,7 +230,7 @@ export function ClosedCasesPage() {
                     <Badge tone="resolved">{resolution}</Badge>
                   </div>
                   <span className="whitespace-nowrap text-xs text-text-3">
-                    {formatCaseDate(item.CreatedOn)}
+                    {formatCaseDate(item.ResolutionDate ?? "", true)}
                   </span>
                 </TableRow>
               );

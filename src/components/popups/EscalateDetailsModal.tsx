@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import {
+  getEscalationDetails,
+  formatEscalationDateTime,
+  getEscalationProgressSteps,
+  getEscalationReviewerLabel,
+  getEscalationClientResponseLabel,
+} from "../../apis/cases";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
-import type { ActiveCase, EscalationDetails } from "../../apis/cases";
-import {
-  formatEscalationDateTime,
-  getEscalationClientResponseLabel,
-  getEscalationProgressSteps,
-  getEscalationReviewerLabel,
-  getEscalationDetails,
-} from "../../apis/cases";
 import { Modal, ModalHead } from "./Modal";
+import { useEffect, useState } from "react";
+import type { ActiveCase, EscalationDetails } from "../../apis/cases";
 
 interface EscalateDetailsModalProps {
   caseItem: ActiveCase | null;

@@ -3,6 +3,7 @@ export interface ActiveCase {
   Title: string | null;
   CaseNumber: string;
   CreatedOn: string;
+  ResolutionDate?: string | null;
   Status: string;
   CaseAge: string | null;
   Sla: string;
@@ -58,9 +59,14 @@ export interface CreateCasePayload {
 }
 
 export interface CreateCaseResponse {
+  CaseId?: string;
+  TicketNumber?: string;
+  AccountId?: string;
+  ContactId?: string;
+  PriorityCode?: number;
+  PriorityDisplayName?: string;
+  Message?: string;
   success?: boolean;
-  message?: string;
-  [key: string]: unknown;
 }
 
 export interface CaseDetailEntity {
@@ -83,6 +89,8 @@ export interface CaseDetail {
   PriorityCode: number | null;
   CategoryCode: number | null;
   PersonResponsible: string | null;
+  CommentSubject: string | null;
+  CommentDetail: string | null;
   Account: CaseDetailEntity | null;
   Contact: CaseDetailEntity | null;
   Product: CaseDetailEntity | null;

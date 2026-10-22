@@ -429,7 +429,7 @@ export function ChangeRequestModal() {
                 ))}
               </div>
             </FormField> */}
-            <FormField full>
+            {/* <FormField full>
               <FormLabel htmlFor="cr-other-docs">
                 If Other, please specify
               </FormLabel>
@@ -440,7 +440,7 @@ export function ChangeRequestModal() {
                 placeholder="Describe other supporting documents"
                 className={ui.fieldControl}
               />
-            </FormField>
+            </FormField> */}
             <FormField full>
               <FormAttach htmlFor="cr-attachments">Add attachment</FormAttach>
               <input

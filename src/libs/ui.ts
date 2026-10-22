@@ -39,11 +39,11 @@ export const ui = {
 
 export const tableCols = {
   cases:
-    "grid-cols-[118px_minmax(0,1.5fr)_minmax(118px,140px)_100px_92px_minmax(96px,120px)_minmax(100px,118px)] gap-x-3 max-[640px]:min-w-[1020px]",
+    "grid-cols-[118px_minmax(0,1.5fr)_minmax(118px,140px)_110px_118px_minmax(100px,118px)] gap-x-3 max-[640px]:min-w-[920px]",
   casesAll:
-    "grid-cols-[118px_minmax(0,1.4fr)_48px_minmax(0,0.85fr)_minmax(132px,152px)_64px] gap-x-3 max-[640px]:min-w-[880px]",
+    "grid-cols-[118px_minmax(0,1.4fr)_48px_minmax(0,0.85fr)_minmax(132px,152px)_96px] gap-x-3 max-[640px]:min-w-[920px]",
   quotes:
     "grid-cols-[124px_minmax(0,1.4fr)_86px_minmax(0,0.8fr)_minmax(100px,118px)_64px] gap-x-3 max-[640px]:min-w-[860px]",
   closed:
-    "grid-cols-[118px_minmax(0,1.4fr)_48px_minmax(0,0.85fr)_minmax(120px,140px)_64px] gap-x-3 max-[640px]:min-w-[880px]",
+    "grid-cols-[118px_minmax(0,1.4fr)_48px_minmax(0,0.85fr)_minmax(120px,140px)_132px] gap-x-3 max-[640px]:min-w-[960px]",
 } as const;

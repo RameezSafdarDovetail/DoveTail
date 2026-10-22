@@ -1,6 +1,6 @@
+import { ui } from "../../libs/ui";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ui } from "../../libs/ui";
 
 interface ModalProps {
   open: boolean;

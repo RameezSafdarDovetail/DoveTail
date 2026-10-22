@@ -1,21 +1,16 @@
 import {
-  FormField,
-  FormGrid,
-  FormLabel,
-  FormSection,
-} from "./FormPrimitives";
-import { ui } from "../../libs/ui";
-import { cn } from "../../libs/utils";
-import { Button } from "../buttons/Button";
-import { useModal } from "../../hooks/useModal";
-import { Modal, ModalActions, ModalHead } from "./Modal";
-import { useEffect, useState } from "react";
-import {
   getCaseDetailByID,
   mapCategoryCodeLabel,
   mapPriorityCodeLabel,
   type CaseDetail,
 } from "../../apis/cases";
+import { ui } from "../../libs/ui";
+import { cn } from "../../libs/utils";
+import { Button } from "../buttons/Button";
+import { useEffect, useState } from "react";
+import { useModal } from "../../hooks/useModal";
+import { Modal, ModalActions, ModalHead } from "./Modal";
+import { FormField, FormGrid, FormLabel, FormSection } from "./FormPrimitives";
 
 function displayValue(value: string | number | null | undefined) {
   if (value == null) return "—";
@@ -84,9 +79,9 @@ export function CaseDetailModal() {
     };
   }, [open, caseId]);
 
-  const attachments = detail?.Attachments?.filter(
-    (item) => item.DocumentBody || item.FileName
-  ) ?? [];
+  const attachments =
+    detail?.Attachments?.filter((item) => item.DocumentBody || item.FileName) ??
+    [];
 
   return (
     <Modal open={open} labelledBy="case-detail-title" onClose={closeModal}>
@@ -98,7 +93,9 @@ export function CaseDetailModal() {
       />
       <div className={ui.formBody}>
         {loading ? (
-          <div className="py-6 text-[13px] text-text-3">Loading case details…</div>
+          <div className="py-6 text-[13px] text-text-3">
+            Loading case details…
+          </div>
         ) : null}
         {error ? (
           <div className="py-6 text-[13px] font-semibold text-red">{error}</div>
@@ -202,7 +199,8 @@ export function CaseDetailModal() {
               ) : (
                 <div className="grid gap-2.5">
                   {attachments.map((attachment, index) => {
-                    const fileName = attachment.FileName?.trim() || `Attachment ${index + 1}`;
+                    const fileName =
+                      attachment.FileName?.trim() || `Attachment ${index + 1}`;
                     const body = attachment.DocumentBody?.trim() ?? "";
                     const href = body ? toDataUrl(fileName, body) : "";
 
@@ -236,6 +234,25 @@ export function CaseDetailModal() {
                   })}
                 </div>
               )}
+            </FormField>
+
+            <FormSection>Comment</FormSection>
+            <FormField full>
+              <FormLabel>Comment subject</FormLabel>
+              <input
+                type="text"
+                readOnly
+                value={displayValue(detail.CommentSubject)}
+                className={ui.fieldControl}
+              />
+            </FormField>
+            <FormField full>
+              <FormLabel>Comment detail</FormLabel>
+              <textarea
+                readOnly
+                value={displayValue(detail.CommentDetail)}
+                className={cn(ui.fieldControl, ui.fieldTextarea)}
+              />
             </FormField>
           </FormGrid>
         ) : null}

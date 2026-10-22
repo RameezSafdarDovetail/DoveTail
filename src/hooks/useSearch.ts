@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 
-export function useSearch<T>(items: T[], predicate: (item: T, query: string) => boolean) {
-  const [query, setQuery] = useState('');
+export function useSearch<T>(
+  items: T[],
+  predicate: (item: T, query: string) => boolean
+) {
+  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();

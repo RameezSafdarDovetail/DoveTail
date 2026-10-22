@@ -68,6 +68,8 @@ export function LogCaseModal() {
   const contactId = user?.ContactId ?? "";
   const userName = user?.Name ?? "";
   const [status, setStatus] = useState("");
+  const [ticketNumber, setTicketNumber] = useState("");
+  const closeTimerRef = useRef<number | null>(null);
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -89,7 +91,12 @@ export function LogCaseModal() {
 
   useEffect(() => {
     if (!open) return;
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setStatus("");
+    setTicketNumber("");
     setCategory("");
     setSubcategory("");
     setSubmitting(false);
@@ -164,6 +171,10 @@ export function LogCaseModal() {
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      if (closeTimerRef.current != null) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
     };
   }, [open, userName, userEmail, contactId]);
 
@@ -201,9 +212,15 @@ export function LogCaseModal() {
 
     setSubmitting(true);
     try {
-      await createCase(payload);
-      setStatus("Case created successfully");
+      const response = await createCase(payload);
+      const createdTicket = response.TicketNumber?.trim() ?? "";
+      setTicketNumber(createdTicket);
+      setStatus("Case created successfully.");
       void refreshCaseLists();
+      closeTimerRef.current = window.setTimeout(() => {
+        closeTimerRef.current = null;
+        closeModal();
+      }, 3000);
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "Failed to create case"
@@ -453,13 +470,16 @@ export function LogCaseModal() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting}
+            disabled={submitting || Boolean(ticketNumber)}
             className={submitting ? "cursor-not-allowed opacity-60" : undefined}
           >
             {submitting ? "Submitting…" : "Submit case"}
           </Button>
         </ModalActions>
-        <ModalStatus>{status}</ModalStatus>
+        <ModalStatus>
+          {status}{" "}
+          {ticketNumber ? <>Your case number is {ticketNumber}.</> : null}
+        </ModalStatus>
       </form>
     </Modal>
   );

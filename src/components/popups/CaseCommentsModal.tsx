@@ -21,17 +21,14 @@ import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
+function exactCaseNumber(value: string) {
+  return normalizeCaseNumber(value.trim()).toLowerCase();
+}
+
 function caseMatchesSearch(item: CaseChangeRequestInfo, term: string) {
-  const query = term.trim().toLowerCase();
+  const query = term.trim();
   if (!query) return true;
-  const normalizedTerm = normalizeCaseNumber(query).toLowerCase();
-  const caseNumber = item.CaseNumber.toLowerCase();
-  return (
-    caseNumber.includes(query) ||
-    normalizeCaseNumber(caseNumber).toLowerCase().includes(normalizedTerm) ||
-    (item.LinkedCaseDetails ?? "").toLowerCase().includes(query) ||
-    (item.Account ?? "").toLowerCase().includes(query)
-  );
+  return exactCaseNumber(item.CaseNumber) === exactCaseNumber(query);
 }
 
 export function CaseCommentsModal() {
@@ -128,13 +125,6 @@ export function CaseCommentsModal() {
     const formData = new FormData(form);
     const attachment = formData.get("attachments");
 
-    if (attachment instanceof File && attachment.size > 0) {
-      if (!attachment.type.startsWith("image/")) {
-        setStatus("Please select an image file only.");
-        return;
-      }
-    }
-
     const payload = new FormData();
     payload.append("CaseId", selectedCase.CaseId);
     payload.append("UserEmail", userEmail);
@@ -180,21 +170,17 @@ export function CaseCommentsModal() {
                 ref={searchRef}
                 id="comment-case-search"
                 type="search"
-                placeholder="Search by case number, client reference or keywords"
+                placeholder="Enter an exact case number"
                 value={search}
                 onChange={(event) => {
                   const value = event.target.value;
                   setSearch(value);
-                  setLinkedCase((current) => {
-                    if (!current) return current;
-                    const selected = cases.find(
-                      (item) => item.CaseNumber === current
-                    );
-                    if (!selected || !caseMatchesSearch(selected, value)) {
-                      return "";
-                    }
-                    return current;
-                  });
+                  const term = value.trim();
+                  if (!term) return;
+                  const match = cases.find((item) =>
+                    caseMatchesSearch(item, term)
+                  );
+                  setLinkedCase(match?.CaseNumber ?? "");
                 }}
                 className={ui.fieldControl}
               />
@@ -221,6 +207,12 @@ export function CaseCommentsModal() {
                   </option>
                 ))}
               </select>
+              {!casesLoading && search.trim() && filteredCases.length === 0 ? (
+                <FormHelp>
+                  This case number is not available. Try another number, or
+                  clear the search to see the full list.
+                </FormHelp>
+              ) : null}
             </FormField>
             <FormField full>
               <FormLabel htmlFor="comment-case-details">Case details</FormLabel>
@@ -295,10 +287,11 @@ export function CaseCommentsModal() {
                 id="comment-attachments"
                 name="attachments"
                 type="file"
-                accept="image/*"
                 className={ui.fileInput}
               />
-              <FormHelp>One image only (any image type).</FormHelp>
+              <FormHelp>
+                Any file type, such as PDF, Excel, or other documents.
+              </FormHelp>
             </FormField>
             {/* <div className="col-span-full grid gap-2.5 rounded-lg border border-border-soft bg-[#f8fafc] p-3">
               {comments.map((comment) => (

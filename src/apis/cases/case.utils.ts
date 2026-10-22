@@ -59,10 +59,14 @@ export function compareCreatedOnDesc(
   return 0;
 }
 
-export function formatCaseDate(iso: string) {
+export function formatCaseDate(iso: string, withYear = false) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  });
 }
 
 /** Matches statuses like "84 Problem Solved". */

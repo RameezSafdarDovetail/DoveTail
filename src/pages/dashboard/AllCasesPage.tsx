@@ -124,7 +124,7 @@ export function AllCasesPage() {
                       mapPriorityType(item.Priority),
                       item.Priority,
                       mapCatalogStatusLabel(item.Status),
-                      formatCaseDate(item.CreatedOn),
+                      formatCaseDate(item.CreatedOn, true),
                     ]),
                   })
                 }
@@ -220,12 +220,12 @@ export function AllCasesPage() {
                     <div className={cn(ui.caseTitle, "truncate")} title={title}>
                       {title}
                     </div>
-                    <div
+                    {/* <div
                       className={cn(ui.caseSub, "truncate")}
                       title={item.Priority}
                     >
                       Re: {item.Priority}
-                    </div>
+                    </div> */}
                   </div>
                   <div className="min-w-0">
                     <Pill>{type}</Pill>
@@ -254,7 +254,7 @@ export function AllCasesPage() {
                     </Badge>
                   </div>
                   <span className="whitespace-nowrap text-xs text-text-3">
-                    {formatCaseDate(item.CreatedOn)}
+                    {formatCaseDate(item.CreatedOn, true)}
                   </span>
                 </TableRow>
               );

@@ -1,5 +1,5 @@
-import { NavLink } from "react-router-dom";
 import { cn } from "../../libs/utils";
+import { NavLink } from "react-router-dom";
 
 interface SidebarItemProps {
   to: string;

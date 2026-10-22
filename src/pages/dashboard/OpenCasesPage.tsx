@@ -6,6 +6,7 @@ import {
   mapCatalogStatus,
   mapPriorityLabel,
   matchesCaseSearch,
+  formatCaseDate,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
   matchesCreatedOnRange,
@@ -129,6 +130,7 @@ export function OpenCasesPage() {
                       "Title & Description",
                       "Status",
                       "Priority",
+                      "Created On",
                       "Age / TAT",
                       "SLA",
                     ],
@@ -137,6 +139,7 @@ export function OpenCasesPage() {
                       `${item.Title || "Untitled case"} ${item.Priority}`,
                       mapCatalogStatusLabel(item.Status),
                       mapPriorityLabel(mapPriority(item.Priority)),
+                      formatCaseDate(item.CreatedOn, true),
                       item.CaseAge ?? "—",
                       item.Sla,
                     ]),
@@ -198,6 +201,7 @@ export function OpenCasesPage() {
             "Title ",
             "Status",
             "Priority",
+            "Created On",
             // "Age / TAT",
             // "SLA",
             "Actions",
@@ -267,6 +271,9 @@ export function OpenCasesPage() {
                       {mapPriorityLabel(casePriority)}
                     </PriorityBadge>
                   </div>
+                  <span className="whitespace-nowrap text-xs text-text-3">
+                    {formatCaseDate(item.CreatedOn, true)}
+                  </span>
                   {/* <span className={cn(ui.tat, "whitespace-nowrap")}>
                     {item.CaseAge ?? "—"}
                   </span>
