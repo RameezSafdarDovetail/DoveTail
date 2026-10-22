@@ -34,6 +34,7 @@ function caseMatchesSearch(item: CaseChangeRequestInfo, term: string) {
 export function CaseCommentsModal() {
   const { user } = useAuth();
   const userEmail = user?.Email ?? "";
+  const contactId = user?.ContactId ?? "";
   const [status, setStatus] = useState("");
   const { modal, closeModal } = useModal();
   const [search, setSearch] = useState("");
@@ -70,9 +71,16 @@ export function CaseCommentsModal() {
     let cancelled = false;
 
     async function loadCases() {
+      if (!contactId) {
+        setCases([]);
+        setCasesLoading(false);
+        setStatus("Missing contact id. Please sign in again.");
+        return;
+      }
+
       setCasesLoading(true);
       try {
-        const data = await getCaseChangeRequestInfo();
+        const data = await getCaseChangeRequestInfo(contactId);
         if (cancelled) return;
         setCases(data);
         const initial = modal.caseNumber
@@ -104,7 +112,7 @@ export function CaseCommentsModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [modal.caseNumber, open]);
+  }, [modal.caseNumber, open, contactId]);
 
   const createdOnStamp = useMemo(() => {
     if (!selectedCase?.CreatedOn) return "";

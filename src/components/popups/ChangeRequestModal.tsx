@@ -14,6 +14,7 @@ import {
 } from "../../apis/changeRequests";
 import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
+import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { refreshCaseLists } from "../../libs/queryClient";
 import { cn, normalizeCaseNumber } from "../../libs/utils";
@@ -28,6 +29,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 // ] as const;
 
 export function ChangeRequestModal() {
+  const { user } = useAuth();
+  const contactId = user?.ContactId ?? "";
   const { modal, closeModal } = useModal();
   const open = modal.name === "change-request";
   const caseMenuRef = useRef<HTMLDivElement>(null);
@@ -67,9 +70,16 @@ export function ChangeRequestModal() {
     let cancelled = false;
 
     async function loadCases() {
+      if (!contactId) {
+        setCases([]);
+        setCasesLoading(false);
+        setStatus("Missing contact id. Please sign in again.");
+        return;
+      }
+
       setCasesLoading(true);
       try {
-        const data = await getCaseChangeRequestInfo();
+        const data = await getCaseChangeRequestInfo(contactId);
         if (cancelled) return;
         setCases(data);
         const initial = modal.caseNumber
@@ -104,7 +114,7 @@ export function ChangeRequestModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [modal.caseNumber, open]);
+  }, [modal.caseNumber, open, contactId]);
 
   useEffect(() => {
     if (!caseMenuOpen) return;

@@ -11,8 +11,10 @@ export async function createChangeRequest(payload: FormData) {
   });
 }
 
-export async function getCaseChangeRequestInfo() {
-  return apiRequest<CaseChangeRequestInfo[]>("GetCaseChangeRequestInfo", {
-    method: "GET",
-  });
+export async function getCaseChangeRequestInfo(contactId: string) {
+  const params = new URLSearchParams({ contactId });
+  return apiRequest<CaseChangeRequestInfo[]>(
+    `GetCaseChangeRequestInfo?${params.toString()}`,
+    { method: "GET" }
+  );
 }
