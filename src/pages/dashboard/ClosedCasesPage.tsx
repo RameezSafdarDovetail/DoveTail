@@ -71,10 +71,10 @@ export function ClosedCasesPage() {
         const type = mapPriorityType(item.Priority);
         const resolution = mapCatalogStatusLabel(item.Status);
         return (
-          item.CaseNumber.toLowerCase().includes(term) ||
+          (item.CaseNumber ?? "").toLowerCase().includes(term) ||
           title.toLowerCase().includes(term) ||
           type.toLowerCase().includes(term) ||
-          item.Priority.toLowerCase().includes(term) ||
+          (item.Priority ?? "").toLowerCase().includes(term) ||
           resolution.toLowerCase().includes(term)
         );
       })

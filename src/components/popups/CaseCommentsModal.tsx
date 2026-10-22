@@ -21,14 +21,14 @@ import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
-function exactCaseNumber(value: string) {
-  return normalizeCaseNumber(value.trim()).toLowerCase();
+function normalizedCaseNumber(value: string | null | undefined) {
+  return normalizeCaseNumber((value ?? "").trim()).toLowerCase();
 }
 
 function caseMatchesSearch(item: CaseChangeRequestInfo, term: string) {
-  const query = term.trim();
+  const query = normalizedCaseNumber(term);
   if (!query) return true;
-  return exactCaseNumber(item.CaseNumber) === exactCaseNumber(query);
+  return normalizedCaseNumber(item.CaseNumber).includes(query);
 }
 
 export function CaseCommentsModal() {
@@ -178,17 +178,22 @@ export function CaseCommentsModal() {
                 ref={searchRef}
                 id="comment-case-search"
                 type="search"
-                placeholder="Enter an exact case number"
+                placeholder="Search by case number"
                 value={search}
                 onChange={(event) => {
                   const value = event.target.value;
                   setSearch(value);
-                  const term = value.trim();
-                  if (!term) return;
-                  const match = cases.find((item) =>
-                    caseMatchesSearch(item, term)
-                  );
-                  setLinkedCase(match?.CaseNumber ?? "");
+                  if (!value.trim()) return;
+                  setLinkedCase((current) => {
+                    if (!current) return current;
+                    const selected = cases.find(
+                      (item) => item.CaseNumber === current
+                    );
+                    if (selected && caseMatchesSearch(selected, value)) {
+                      return current;
+                    }
+                    return "";
+                  });
                 }}
                 className={ui.fieldControl}
               />
@@ -198,10 +203,9 @@ export function CaseCommentsModal() {
                 Case number
               </FormLabel>
               <select
-                key={search}
                 id="comment-linked-case"
                 required
-                disabled={casesLoading || filteredCases.length === 0}
+                disabled={casesLoading}
                 value={linkedCase}
                 onChange={(event) => setLinkedCase(event.target.value)}
                 className={cn(ui.fieldControlWhite, "cursor-pointer")}
@@ -217,8 +221,8 @@ export function CaseCommentsModal() {
               </select>
               {!casesLoading && search.trim() && filteredCases.length === 0 ? (
                 <FormHelp>
-                  This case number is not available. Try another number, or
-                  clear the search to see the full list.
+                  No cases match this search. Try another number, or clear the
+                  search to see the full list.
                 </FormHelp>
               ) : null}
             </FormField>

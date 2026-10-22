@@ -9,7 +9,7 @@ export function matchesCaseSearch(
   if (!query) return true;
 
   const title = (item.Title ?? "").toLowerCase();
-  const caseNumber = item.CaseNumber.toLowerCase();
+  const caseNumber = (item.CaseNumber ?? "").toLowerCase();
   const customerReference = (item.CustomerReference ?? "").toLowerCase();
 
   if (by === "Case Number") return caseNumber.includes(query);

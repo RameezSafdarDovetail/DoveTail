@@ -65,8 +65,10 @@ export function mapSla(sla: string | null | undefined): SlaTone {
   return "ok";
 }
 
-export function mapCatalogStatus(status: string): CaseStatus {
-  const value = status.toLowerCase();
+export function mapCatalogStatus(
+  status: string | null | undefined
+): CaseStatus {
+  const value = (status ?? "").toLowerCase();
   if (
     value.includes("solved") ||
     value.includes("closed") ||
@@ -87,11 +89,12 @@ export function mapCatalogStatus(status: string): CaseStatus {
   return "open";
 }
 
-export function mapCatalogStatusLabel(status: string) {
-  return status.replace(/^\d+\s*/, "").trim() || status;
+export function mapCatalogStatusLabel(status: string | null | undefined) {
+  const value = status ?? "";
+  return value.replace(/^\d+\s*/, "").trim() || value || "—";
 }
 
-export function mapPriorityType(priority: string) {
+export function mapPriorityType(priority: string | null | undefined) {
   const value = mapPriority(priority);
   if (value === "p1") return "P1";
   if (value === "p2") return "P2";

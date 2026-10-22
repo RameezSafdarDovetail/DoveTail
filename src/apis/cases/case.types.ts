@@ -4,7 +4,7 @@ export interface ActiveCase {
   CaseNumber: string;
   CreatedOn: string;
   ResolutionDate?: string | null;
-  Status: string;
+  Status: string | null;
   CaseAge: string | null;
   Sla: string;
   Priority: string;
