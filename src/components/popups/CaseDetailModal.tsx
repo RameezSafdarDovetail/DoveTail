@@ -142,7 +142,7 @@ export function CaseDetailModal() {
               />
             </FormField>
             <FormField>
-              <FormLabel>Type</FormLabel>
+              <FormLabel>Category</FormLabel>
               <input
                 type="text"
                 readOnly
