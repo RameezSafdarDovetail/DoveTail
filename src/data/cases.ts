@@ -238,129 +238,52 @@ export const products = [
   "eDocs",
 ];
 
-export const categoryOptions: Record<string, string[]> = {
-  "User Access & Security": [
-    "New / Changed Access",
-    "Permissions Issue",
-    "Login / Password Issue",
-    "User Locked Out",
-    "Deactivate User",
-    "Other Access Issue",
-  ],
-  "Orders & Waybills": [
-    "Order Issue",
-    "Waybill Issue",
-    "Allocation Issue",
-    "Interface Issue",
-    "Duplicate Order / Waybill",
-    "Other Order / Waybill Issue",
-  ],
-  "Status & Tracking": [
-    "Missing / Incorrect Status",
-    "Status Not Updated",
-    "Status Not Pushing",
-    "Manual Status Update",
-    "Tracking Issue",
-    "Delivery / Manifest Status Issue",
-    "Other Status Issue",
-  ],
-  "Interfaces & Integrations": [
-    "Interface Failure",
-    "Data Not Sent / Received",
-    "Order Interface Issue",
-    "Status Interface Issue",
-    "Integration Configuration Issue",
-    "Duplicate / Delayed Interface Message",
-    "Other Integration Issue",
-  ],
-  "Documents & eDocs": [
-    "Document Issue",
-    "Document Upload Issue",
-    "Delivery Profile Setup / Change",
-    "Profile Not Working",
-    "Company Setup",
-    "Document / Profile Configuration",
-    "Other eDocs Issue",
-  ],
-  "Rating, Charges & Pricing": [
-    "Rate Issue",
-    "Carrier Rating Issue",
-    "Charge Issue",
-    "Pricing Configuration",
-    "Other Rating / Pricing Issue",
-  ],
-  Reports: [
-    "Report Not Working / Loading",
-    "Report Data Issue",
-    "Report Access",
-    "Report Change Request",
-    "New Report Request",
-    "Report Export / Schedule Issue",
-    "Other Reporting Issue",
-  ],
-  "Data & Configuration": [
-    "Data Issue",
-    "Reference Number Issue",
-    "Customer / Account Configuration",
-    "Product / Company Configuration",
-    "Profile / Rule Configuration",
-    "Data Correction",
-    "Other Configuration Issue",
-  ],
-  "System Error / Application Issue": [
-    "Error Message",
-    "Screen / Function Issue",
-    "System Performance Issue",
-    "System Unavailable",
-    "Process Stuck",
-    "Intermittent Issue",
-    "Other System Error",
-  ],
-  "Manifest & Operational Processing": [
-    "Manifest Issue",
-    "Manifest Debrief Issue",
-    "Shipment / Delivery Processing Issue",
-    "Allocation Issue",
-    "Operational Workflow Issue",
-    "Other Manifest / Processing Issue",
-  ],
-  "Change Request / Enhancement": [
-    "New Functionality",
-    "Change Existing Functionality",
-    "Configuration / Workflow Change",
-    "Business Rule Change",
-    "Screen / Field Change",
-    "Integration / Report Enhancement",
-    "Automation Request",
-    "Other Enhancement",
-  ],
-  "General Support & How-To": [
-    "How-To Question",
-    "Process Question",
-    "System Usage Question",
-    "Configuration Question",
-    "Training / Guidance",
-    "Clarification Required",
-    "General Query",
-    "Other",
-  ],
+export const categories = [
+  "System Error - System not working as expected",
+  "Development - New Functionality/Enhancement",
+  "Consulting - Guidance on using the system",
+  "User Error - Incorrect user action or input",
+  "Technical Services - System maintenance and technical tasks",
+  "Software Configuration - Changes to system settings",
+  "External Issue - Client's external system",
+];
+
+export const subcategories = [
+  "Data Update",
+  "Network",
+  "Printer",
+  "Reports",
+  "Software Configuration",
+  "Technical Maintenance",
+  "System Issue",
+  "User Issue",
+  "User Creation",
+  "RF Scanning",
+  "Enhancement",
+  "Integration",
+  "General Enquiry",
+];
+
+/** CRM category option values sent as categoryOptionValue. */
+export const categoryOptionValues: Record<string, number> = {
+  "System Error - System not working as expected": 0,
+  "Development - New Functionality/Enhancement": 1,
+  "Consulting - Guidance on using the system": 2,
+  "User Error - Incorrect user action or input": 3,
+  "Technical Services - System maintenance and technical tasks": 4,
+  "Software Configuration - Changes to system settings": 5,
+  "External Issue - Client's external system": 6,
 };
 
-export const categories = Object.keys(categoryOptions);
-
-export const categoryOptionValues: Record<string, number> = {
-  "User Access & Security": 5,
-  "Orders & Waybills": 6,
-  "Status & Tracking": 7,
-  "Interfaces & Integrations": 8,
-  "Documents & eDocs": 9,
-  "Rating, Charges & Pricing": 10,
-  Reports: 11,
-  "Data & Configuration": 12,
-  "System Error / Application Issue": 13,
-  "Manifest & Operational Processing": 14,
-  "Change Request / Enhancement": 15,
-  "General Support & How-To": 16,
+/** Labels for category codes stored on cases. */
+export const categoryCodeLabels: Record<number, string> = {
+  0: "System Error - System not working as expected",
+  1: "Development - New Functionality/Enhancement",
+  2: "Consulting - Guidance on using the system",
+  3: "User Error - Incorrect user action or input",
+  4: "Technical Services - System maintenance and technical tasks",
+  5: "Software Configuration - Changes to system settings",
+  6: "External Issue - Client's external system",
 };
 
 export const environments = ["Production", "UAT"];

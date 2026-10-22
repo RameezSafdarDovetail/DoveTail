@@ -4,11 +4,7 @@ import type {
   CasePriority,
   HomeStatusTone,
 } from "../../data/cases";
-import { categoryOptionValues } from "../../data/cases";
-
-const categoryCodeLabels = Object.fromEntries(
-  Object.entries(categoryOptionValues).map(([label, value]) => [value, label])
-) as Record<number, string>;
+import { categoryCodeLabels } from "../../data/cases";
 
 const priorityCodeLabels: Record<number, string> = {
   1: "P1 High Priority Call",

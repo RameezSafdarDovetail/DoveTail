@@ -1,7 +1,7 @@
 import {
   categories,
   environments,
-  categoryOptions,
+  subcategories,
   categoryOptionValues,
 } from "../../data/cases";
 import {
@@ -25,7 +25,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { refreshCaseLists } from "../../libs/queryClient";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 const priorityOptions = [
   { value: 1, label: "P1 High Priority Call" },
@@ -81,11 +81,6 @@ export function LogCaseModal() {
   // const [productsLoading, setProductsLoading] = useState(false);
   const [personResponsible, setPersonResponsible] = useState(userName);
   const responsibleRef = useRef<HTMLInputElement>(null);
-
-  const subcategoryOptions = useMemo(
-    () => (category ? categoryOptions[category] ?? [] : []),
-    [category]
-  );
 
   // const crmProductName = useMemo(() => getCrmProductName(products), [products]);
 
@@ -357,10 +352,7 @@ export function LogCaseModal() {
                 name="category"
                 required
                 value={category}
-                onChange={(event) => {
-                  setCategory(event.target.value);
-                  setSubcategory("");
-                }}
+                onChange={(event) => setCategory(event.target.value)}
                 className={cn(ui.fieldControlWhite, "cursor-pointer")}
               >
                 <option value="">-- Select category --</option>
@@ -379,23 +371,17 @@ export function LogCaseModal() {
                 id="case-subcategory"
                 name="subcategory"
                 required
-                disabled={!category}
                 value={subcategory}
                 onChange={(event) => setSubcategory(event.target.value)}
                 className={cn(ui.fieldControlWhite, "cursor-pointer")}
               >
-                <option value="">
-                  {category
-                    ? "-- Select subcategory --"
-                    : "Select a category first"}
-                </option>
-                {subcategoryOptions.map((item) => (
+                <option value="">-- Select subcategory --</option>
+                {subcategories.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
               </select>
-              <FormHelp>Enabled after a category is selected.</FormHelp>
             </FormField>
             <FormField>
               <FormLabel htmlFor="case-priority" required>
@@ -420,7 +406,7 @@ export function LogCaseModal() {
             <FormSection>Case Detail</FormSection>
             <FormField full>
               <FormLabel htmlFor="case-subject" required>
-                Subject
+                Title
               </FormLabel>
               <input
                 id="case-subject"

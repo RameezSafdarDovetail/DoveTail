@@ -88,6 +88,7 @@ export interface CaseDetail {
   CustomerReference: string | null;
   PriorityCode: number | null;
   CategoryCode: number | null;
+  Status: string | null;
   PersonResponsible: string | null;
   CommentSubject: string | null;
   CommentDetail: string | null;

@@ -171,7 +171,16 @@ export function CaseDetailModal() {
 
             <FormSection>Case Detail</FormSection>
             <FormField full>
-              <FormLabel>Subject</FormLabel>
+              <FormLabel>Status</FormLabel>
+              <input
+                type="text"
+                readOnly
+                value={displayValue(detail.Status)}
+                className={ui.fieldControl}
+              />
+            </FormField>
+            <FormField full>
+              <FormLabel>Title</FormLabel>
               <input
                 type="text"
                 readOnly
