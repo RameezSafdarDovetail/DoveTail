@@ -28,7 +28,7 @@ export const ui = {
     "col-span-full rounded-lg border border-[#dbeafe] bg-[#f8fbff] px-3 py-2.5 text-[12.5px] leading-[1.45] text-text-2 [&_strong]:text-text-1",
   formActions:
     "flex gap-2.5 px-5 pb-[18px] max-[640px]:flex-col-reverse [&_.btn-secondary]:min-w-[110px] max-[640px]:[&_.btn-secondary]:w-full [&_.btn-primary]:flex-1 [&_button]:justify-center",
-  formStatus: "min-h-[18px] px-5 pb-4 text-[13px] font-bold text-green",
+  formStatus: "min-h-[18px] px-5 pb-4 text-[13px] font-bold",
   formBody: "px-5 pb-4 pt-[18px]",
   attach:
     "flex w-fit cursor-pointer items-center gap-2.5 text-sm font-bold text-text-1",

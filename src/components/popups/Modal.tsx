@@ -1,6 +1,8 @@
 import { ui } from "../../libs/ui";
+import { cn } from "../../libs/utils";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import type { ModalFeedbackTone } from "../../hooks/useModalFeedback";
 
 interface ModalProps {
   open: boolean;
@@ -81,9 +83,18 @@ export function ModalActions({ children }: { children: ReactNode }) {
   return <div className={ui.formActions}>{children}</div>;
 }
 
-export function ModalStatus({ children }: { children: ReactNode }) {
+export function ModalStatus({
+  children,
+  tone = "success",
+}: {
+  children: ReactNode;
+  tone?: ModalFeedbackTone;
+}) {
   return (
-    <div className={ui.formStatus} aria-live="polite">
+    <div
+      className={cn(ui.formStatus, tone === "error" ? "text-red" : "text-green")}
+      aria-live={tone === "error" ? "assertive" : "polite"}
+    >
       {children}
     </div>
   );

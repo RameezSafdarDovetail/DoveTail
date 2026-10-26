@@ -3,6 +3,7 @@ import { cn } from "../../libs/utils";
 import { Button } from "../buttons/Button";
 import { useState, type FormEvent } from "react";
 import { refreshCaseLists } from "../../libs/queryClient";
+import { useModalFeedback } from "../../hooks/useModalFeedback";
 import { FormField, FormHelp, FormLabel } from "./FormPrimitives";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { acceptQuote, rejectQuote, type QuoteItem } from "../../apis/quotes";
@@ -35,21 +36,28 @@ export function QuoteActionModal({
   const [poNumber, setPoNumber] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectionComments, setRejectionComments] = useState("");
-  const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const {
+    message: status,
+    tone: statusTone,
+    pendingClose,
+    reset,
+    showError,
+    showSuccess,
+  } = useModalFeedback(Boolean(action), closeModal);
 
   function closeModal() {
+    reset();
     setPoNumber("");
     setRejectionReason("");
     setRejectionComments("");
-    setStatus("");
     setSubmitting(false);
     onClose();
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!action || submitting) return;
+    if (!action || submitting || pendingClose) return;
 
     if (action.type === "accept") {
       const form = new FormData(event.currentTarget);
@@ -64,14 +72,14 @@ export function QuoteActionModal({
       }
 
       setSubmitting(true);
-      setStatus("");
+      reset();
       try {
         await acceptQuote(payload);
-        setStatus("Quote accepted successfully.");
+        showSuccess("Quote accepted successfully.");
         void refreshCaseLists();
         onSuccess?.();
       } catch (error) {
-        setStatus(
+        showError(
           error instanceof Error ? error.message : "Failed to accept quote"
         );
       } finally {
@@ -82,23 +90,23 @@ export function QuoteActionModal({
 
     const reasonValue = Number(rejectionReason);
     if (!Number.isFinite(reasonValue) || reasonValue < 1) {
-      setStatus("Please select a rejection reason.");
+      showError("Please select a rejection reason.");
       return;
     }
 
     setSubmitting(true);
-    setStatus("");
+    reset();
     try {
       await rejectQuote({
         QuoteId: action.quote.Id,
         RejectionReasonOptionValue: reasonValue,
         RejectionComments: rejectionComments.trim(),
       });
-      setStatus("Quote rejected successfully.");
+      showSuccess("Quote rejected successfully.");
       void refreshCaseLists();
       onSuccess?.();
     } catch (error) {
-      setStatus(
+      showError(
         error instanceof Error ? error.message : "Failed to reject quote"
       );
     } finally {
@@ -205,8 +213,12 @@ export function QuoteActionModal({
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting}
-            className={submitting ? "cursor-not-allowed opacity-60" : undefined}
+            disabled={submitting || pendingClose}
+            className={
+              submitting || pendingClose
+                ? "cursor-not-allowed opacity-60"
+                : undefined
+            }
           >
             {submitting
               ? "Submitting…"
@@ -215,7 +227,7 @@ export function QuoteActionModal({
               : "Confirm Reject"}
           </Button>
         </ModalActions>
-        <ModalStatus>{status}</ModalStatus>
+        <ModalStatus tone={statusTone}>{status}</ModalStatus>
       </form>
     </Modal>
   );

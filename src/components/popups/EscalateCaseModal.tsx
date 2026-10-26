@@ -7,6 +7,7 @@ import type { ActiveCase } from "../../apis/cases";
 import { FormField, FormLabel } from "./FormPrimitives";
 import { refreshCaseLists } from "../../libs/queryClient";
 import { useEffect, useState, type FormEvent } from "react";
+import { useModalFeedback } from "../../hooks/useModalFeedback";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 
 interface EscalateCaseModalProps {
@@ -25,42 +26,49 @@ export function EscalateCaseModal({
   const contactId = user?.ContactId ?? "";
   const [personResponsible, setPersonResponsible] = useState(userEmail);
   const [escalateReason, setEscalateReason] = useState("");
-  const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const {
+    message: status,
+    tone: statusTone,
+    pendingClose,
+    reset,
+    showError,
+    showSuccess,
+  } = useModalFeedback(Boolean(caseItem), closeModal);
 
   useEffect(() => {
     if (!caseItem) return;
     setPersonResponsible(userEmail);
     setEscalateReason("");
-    setStatus("");
+    reset();
     setSubmitting(false);
-  }, [caseItem, userEmail]);
+  }, [caseItem, userEmail, reset]);
 
   function closeModal() {
+    reset();
     setPersonResponsible(userEmail);
     setEscalateReason("");
-    setStatus("");
     setSubmitting(false);
     onClose();
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!caseItem || submitting) return;
+    if (!caseItem || submitting || pendingClose) return;
 
     if (!contactId) {
-      setStatus("Missing contact id. Please sign in again.");
+      showError("Missing contact id. Please sign in again.");
       return;
     }
 
     const reason = escalateReason.trim();
     if (!reason) {
-      setStatus("Please enter an escalation reason.");
+      showError("Please enter an escalation reason.");
       return;
     }
 
     setSubmitting(true);
-    setStatus("");
+    reset();
 
     try {
       await escalateCase({
@@ -68,11 +76,11 @@ export function EscalateCaseModal({
         Reason: reason,
         EscalatedByContactId: contactId,
       });
-      setStatus("Case escalated successfully.");
+      showSuccess("Case escalated successfully.");
       void refreshCaseLists();
       onSuccess?.();
     } catch (error) {
-      setStatus(
+      showError(
         error instanceof Error ? error.message : "Failed to escalate case"
       );
     } finally {
@@ -132,7 +140,6 @@ export function EscalateCaseModal({
             </FormField>
           </div>
         </div>
-        <ModalStatus>{status}</ModalStatus>
         <ModalActions>
           <Button
             variant="secondary"
@@ -141,10 +148,15 @@ export function EscalateCaseModal({
           >
             Cancel
           </Button>
-          <Button variant="primary" type="submit" disabled={submitting}>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={submitting || pendingClose}
+          >
             {submitting ? "Escalating..." : "Escalate"}
           </Button>
         </ModalActions>
+        <ModalStatus tone={statusTone}>{status}</ModalStatus>
       </form>
     </Modal>
   );

@@ -1,11 +1,12 @@
 import {
   // mapSla,
-  mapStatus,
   mapPriority,
-  mapPriorityLabel,
-  // buildDashboardStats,
   getActiveCases,
+  mapCatalogStatus,
+  mapPriorityLabel,
   compareCreatedOnDesc,
+  mapCatalogStatusLabel,
+  // buildDashboardStats,
 } from "../../apis/cases";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
@@ -14,11 +15,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { useQuery } from "@tanstack/react-query";
 import { Hero } from "../../components/hero/Hero";
+import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
+import { PageBody } from "../../components/layout/PageBody";
 // import { SlaChip } from "../../components/badges/SlaChip";
 // import { StatCard } from "../../components/cards/StatCard";
-import { PageBody } from "../../components/layout/PageBody";
-import { StatusChip } from "../../components/badges/StatusChip";
 import { QuickAccess } from "../../components/cards/QuickAccess";
 import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { PriorityFilter } from "../../components/buttons/PriorityFilter";
@@ -128,7 +129,7 @@ export function HomePage() {
               </PriorityFilter>
             </div>
             <div className="p-0 max-[980px]:overflow-x-auto">
-              <div className="grid grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 bg-[#f8fafc] px-[18px] py-[13px] text-[11px] font-extrabold tracking-[0.06em] text-text-3 uppercase max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px]">
+              <div className="grid grid-cols-[92px_minmax(220px,1fr)_minmax(150px,220px)_70px_92px] items-center gap-3 bg-[#f8fafc] px-[18px] py-[13px] text-[11px] font-extrabold tracking-[0.06em] text-text-3 uppercase max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_minmax(140px,200px)_60px_86px]">
                 <span>Priority</span>
                 <span>Case</span>
                 <span>Status</span>
@@ -156,13 +157,14 @@ export function HomePage() {
                 {!loading &&
                   visibleCases.map((item) => {
                     const casePriority = mapPriority(item.Priority);
-                    const status = mapStatus(item.Status);
+                    const catalogStatus = mapCatalogStatus(item.Status);
+                    const statusLabel = mapCatalogStatusLabel(item.Status);
                     // const slaTone = mapSla(item.Sla);
 
                     return (
                       <div
                         key={item.Id}
-                        className="grid cursor-pointer grid-cols-[92px_minmax(220px,1fr)_112px_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_104px_60px_86px] hover:bg-glass-hover"
+                        className="grid cursor-pointer grid-cols-[92px_minmax(220px,1fr)_minmax(150px,220px)_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_minmax(140px,200px)_60px_86px] hover:bg-glass-hover"
                         onClick={() => openCaseDetail(item.Id)}
                       >
                         <span>
@@ -176,10 +178,19 @@ export function HomePage() {
                             {item.Title || "Untitled case"}
                           </small>
                         </div>
-                        <span>
-                          <StatusChip tone={status.tone}>
-                            {status.label}
-                          </StatusChip>
+                        <span className="min-w-0 overflow-hidden">
+                          <Badge
+                            tone={
+                              catalogStatus === "open"
+                                ? "open"
+                                : catalogStatus === "pending"
+                                ? "pending"
+                                : "closed"
+                            }
+                            withDot
+                          >
+                            {statusLabel}
+                          </Badge>
                         </span>
                         {/* <span>{item.CaseAge ?? "—"}</span>
                         <span>

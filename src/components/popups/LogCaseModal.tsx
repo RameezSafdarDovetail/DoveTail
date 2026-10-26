@@ -24,8 +24,9 @@ import { createCase } from "../../apis/cases";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { refreshCaseLists } from "../../libs/queryClient";
-import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
+import { useModalFeedback } from "../../hooks/useModalFeedback";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 
 const priorityOptions = [
   { value: 1, label: "P1 High Priority Call" },
@@ -62,14 +63,25 @@ const FALLBACK_PRODUCT_NAMES = [
 
 export function LogCaseModal() {
   const { user } = useAuth();
-  const { modal, closeModal } = useModal();
+  const { modal, closeModal: dismissModal } = useModal();
   const open = modal.name === "log-case";
   const userEmail = user?.Email ?? "";
   const contactId = user?.ContactId ?? "";
   const userName = user?.Name ?? "";
-  const [status, setStatus] = useState("");
   const [ticketNumber, setTicketNumber] = useState("");
-  const closeTimerRef = useRef<number | null>(null);
+  const {
+    message: status,
+    tone: statusTone,
+    pendingClose,
+    reset,
+    showError,
+    showSuccess,
+  } = useModalFeedback(open, closeModal);
+
+  function closeModal() {
+    reset();
+    dismissModal();
+  }
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -86,11 +98,7 @@ export function LogCaseModal() {
 
   useEffect(() => {
     if (!open) return;
-    if (closeTimerRef.current != null) {
-      window.clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-    setStatus("");
+    reset();
     setTicketNumber("");
     setCategory("");
     setSubcategory("");
@@ -106,7 +114,7 @@ export function LogCaseModal() {
         setAccounts([]);
         setSelectedAccount("");
         setAccountsLoading(false);
-        setStatus("Missing contact id. Please sign in again.");
+        showError("Missing contact id. Please sign in again.");
         return;
       }
 
@@ -121,7 +129,7 @@ export function LogCaseModal() {
         if (!cancelled) {
           setAccounts([]);
           setSelectedAccount("");
-          setStatus(
+          showError(
             error instanceof Error ? error.message : "Failed to load accounts"
           );
         }
@@ -166,16 +174,12 @@ export function LogCaseModal() {
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
-      if (closeTimerRef.current != null) {
-        window.clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
     };
-  }, [open, userName, userEmail, contactId]);
+  }, [open, userName, userEmail, contactId, reset, showError]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || pendingClose) return;
 
     const form = new FormData(event.currentTarget);
     const selectedCategory = String(form.get("category") ?? "");
@@ -210,14 +214,10 @@ export function LogCaseModal() {
       const response = await createCase(payload);
       const createdTicket = response.TicketNumber?.trim() ?? "";
       setTicketNumber(createdTicket);
-      setStatus("Case created successfully.");
+      showSuccess("Case created successfully.");
       void refreshCaseLists();
-      closeTimerRef.current = window.setTimeout(() => {
-        closeTimerRef.current = null;
-        closeModal();
-      }, 3000);
     } catch (error) {
-      setStatus(
+      showError(
         error instanceof Error ? error.message : "Failed to create case"
       );
     } finally {
@@ -456,13 +456,17 @@ export function LogCaseModal() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting || Boolean(ticketNumber)}
-            className={submitting ? "cursor-not-allowed opacity-60" : undefined}
+            disabled={submitting || pendingClose || Boolean(ticketNumber)}
+            className={
+              submitting || pendingClose
+                ? "cursor-not-allowed opacity-60"
+                : undefined
+            }
           >
             {submitting ? "Submitting…" : "Submit case"}
           </Button>
         </ModalActions>
-        <ModalStatus>
+        <ModalStatus tone={statusTone}>
           {status}{" "}
           {ticketNumber ? <>Your case number is {ticketNumber}.</> : null}
         </ModalStatus>

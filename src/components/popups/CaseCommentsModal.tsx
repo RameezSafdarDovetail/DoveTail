@@ -7,7 +7,6 @@ import {
   FormAttach,
   FormSection,
 } from "./FormPrimitives";
-import { updateCaseComment } from "../../apis/comments";
 import {
   getCaseChangeRequestInfo,
   type CaseChangeRequestInfo,
@@ -16,7 +15,9 @@ import { ui } from "../../libs/ui";
 import { Button } from "../buttons/Button";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
+import { updateCaseComment } from "../../apis/comments";
 import { refreshCaseLists } from "../../libs/queryClient";
+import { useModalFeedback } from "../../hooks/useModalFeedback";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { cn, formatStamp, normalizeCaseNumber } from "../../libs/utils";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -35,11 +36,23 @@ export function CaseCommentsModal() {
   const { user } = useAuth();
   const userEmail = user?.Email ?? "";
   const contactId = user?.ContactId ?? "";
-  const [status, setStatus] = useState("");
-  const { modal, closeModal } = useModal();
+  const { modal, closeModal: dismissModal } = useModal();
+  const open = modal.name === "case-comments";
+  const {
+    message: status,
+    tone: statusTone,
+    pendingClose,
+    reset,
+    showError,
+    showSuccess,
+  } = useModalFeedback(open, closeModal);
+
+  function closeModal() {
+    reset();
+    dismissModal();
+  }
   const [search, setSearch] = useState("");
   const [subject, setSubject] = useState("");
-  const open = modal.name === "case-comments";
   const searchRef = useRef<HTMLInputElement>(null);
   const attachmentRef = useRef<HTMLInputElement>(null);
   const [linkedCase, setLinkedCase] = useState("");
@@ -60,7 +73,7 @@ export function CaseCommentsModal() {
 
   useEffect(() => {
     if (!open) return;
-    setStatus("");
+    reset();
     setSearch("");
     setSubject("");
     setDetail("");
@@ -74,7 +87,7 @@ export function CaseCommentsModal() {
       if (!contactId) {
         setCases([]);
         setCasesLoading(false);
-        setStatus("Missing contact id. Please sign in again.");
+        showError("Missing contact id. Please sign in again.");
         return;
       }
 
@@ -96,7 +109,7 @@ export function CaseCommentsModal() {
       } catch (error) {
         if (!cancelled) {
           setCases([]);
-          setStatus(
+          showError(
             error instanceof Error ? error.message : "Failed to load cases"
           );
         }
@@ -112,7 +125,7 @@ export function CaseCommentsModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [modal.caseNumber, open, contactId]);
+  }, [modal.caseNumber, open, contactId, reset, showError]);
 
   const createdOnStamp = useMemo(() => {
     if (!selectedCase?.CreatedOn) return "";
@@ -123,9 +136,9 @@ export function CaseCommentsModal() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || pendingClose) return;
     if (!selectedCase) {
-      setStatus("Please select a case.");
+      showError("Please select a case.");
       return;
     }
 
@@ -146,13 +159,13 @@ export function CaseCommentsModal() {
     setSubmitting(true);
     try {
       await updateCaseComment(payload);
-      setStatus("Comment added successfully");
+      showSuccess("Comment added successfully");
       void refreshCaseLists();
       setSubject("");
       setDetail("");
       if (attachmentRef.current) attachmentRef.current.value = "";
     } catch (error) {
-      setStatus(
+      showError(
         error instanceof Error ? error.message : "Failed to add comment"
       );
     } finally {
@@ -328,13 +341,17 @@ export function CaseCommentsModal() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting || casesLoading}
-            className={submitting ? "cursor-not-allowed opacity-60" : undefined}
+            disabled={submitting || pendingClose || casesLoading}
+            className={
+              submitting || pendingClose
+                ? "cursor-not-allowed opacity-60"
+                : undefined
+            }
           >
             {submitting ? "Submitting…" : "Add comment"}
           </Button>
         </ModalActions>
-        <ModalStatus>{status}</ModalStatus>
+        <ModalStatus tone={statusTone}>{status}</ModalStatus>
       </form>
     </Modal>
   );

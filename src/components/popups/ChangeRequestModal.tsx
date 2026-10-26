@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { refreshCaseLists } from "../../libs/queryClient";
 import { cn, normalizeCaseNumber } from "../../libs/utils";
+import { useModalFeedback } from "../../hooks/useModalFeedback";
 import { Modal, ModalActions, ModalHead, ModalStatus } from "./Modal";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
@@ -31,8 +32,21 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 export function ChangeRequestModal() {
   const { user } = useAuth();
   const contactId = user?.ContactId ?? "";
-  const { modal, closeModal } = useModal();
+  const { modal, closeModal: dismissModal } = useModal();
   const open = modal.name === "change-request";
+  const {
+    message: status,
+    tone: statusTone,
+    pendingClose,
+    reset,
+    showError,
+    showSuccess,
+  } = useModalFeedback(open, closeModal);
+
+  function closeModal() {
+    reset();
+    dismissModal();
+  }
   const caseMenuRef = useRef<HTMLDivElement>(null);
   const caseSelectRef = useRef<HTMLInputElement>(null);
   const [linkedCase, setLinkedCase] = useState("");
@@ -40,7 +54,6 @@ export function ChangeRequestModal() {
   const [caseMenuOpen, setCaseMenuOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(0);
   // const [approvedAt, setApprovedAt] = useState("Not approved yet");
-  const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cases, setCases] = useState<CaseChangeRequestInfo[]>([]);
   const [casesLoading, setCasesLoading] = useState(false);
@@ -58,7 +71,7 @@ export function ChangeRequestModal() {
 
   useEffect(() => {
     if (!open) return;
-    setStatus("");
+    reset();
     setSubmitting(false);
     // setApprovedAt("Not approved yet");
     setLinkedCase("");
@@ -73,7 +86,7 @@ export function ChangeRequestModal() {
       if (!contactId) {
         setCases([]);
         setCasesLoading(false);
-        setStatus("Missing contact id. Please sign in again.");
+        showError("Missing contact id. Please sign in again.");
         return;
       }
 
@@ -96,7 +109,7 @@ export function ChangeRequestModal() {
       } catch (error) {
         if (!cancelled) {
           setCases([]);
-          setStatus(
+          showError(
             error instanceof Error
               ? error.message
               : "Failed to load change request info"
@@ -114,7 +127,7 @@ export function ChangeRequestModal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [modal.caseNumber, open, contactId]);
+  }, [modal.caseNumber, open, contactId, reset, showError]);
 
   useEffect(() => {
     if (!caseMenuOpen) return;
@@ -159,24 +172,28 @@ export function ChangeRequestModal() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || pendingClose) return;
 
     const form = new FormData(event.currentTarget);
     const attachment = form.get("attachments");
 
     if (!selectedCase?.CaseId) {
-      setStatus("Please select a case.");
+      showError("Please select a case.");
       return;
     }
 
     const payload = new FormData();
     payload.append("CaseId", selectedCase.CaseId);
     payload.append("linkedCase", selectedCase.CaseNumber);
+    payload.append(
+      "changeRequestNumber",
+      selectedCase.ChangeRequestNumberPreview ?? ""
+    );
     payload.append("changeTitle", String(form.get("changeTitle") ?? ""));
     payload.append("details", String(form.get("details") ?? ""));
     payload.append("ImpactedAreas", String(form.get("impacted") ?? ""));
     payload.append("currentProcess", String(form.get("currentProcess") ?? ""));
-    payload.append("justification", String(form.get("justification") ?? ""));
+    // payload.append("justification", String(form.get("justification") ?? ""));
 
     form
       .getAll("supportingDocs")
@@ -193,10 +210,10 @@ export function ChangeRequestModal() {
     setSubmitting(true);
     try {
       await createChangeRequest(payload);
-      setStatus("Change request submitted successfully");
+      showSuccess("Change request submitted successfully");
       void refreshCaseLists();
     } catch (error) {
-      setStatus(
+      showError(
         error instanceof Error
           ? error.message
           : "Failed to submit change request"
@@ -475,7 +492,7 @@ export function ChangeRequestModal() {
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
             </FormField> */}
-            <FormField full>
+            {/* <FormField full>
               <FormLabel htmlFor="cr-justification" required>
                 Justification for change request
               </FormLabel>
@@ -486,7 +503,7 @@ export function ChangeRequestModal() {
                 required
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
-            </FormField>
+            </FormField> */}
 
             {/* <FormSection>Approval Workflow</FormSection>
             <FormNote>
@@ -535,13 +552,17 @@ export function ChangeRequestModal() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting}
-            className={submitting ? "cursor-not-allowed opacity-60" : undefined}
+            disabled={submitting || pendingClose}
+            className={
+              submitting || pendingClose
+                ? "cursor-not-allowed opacity-60"
+                : undefined
+            }
           >
             {submitting ? "Submitting…" : "Submit change request"}
           </Button>
         </ModalActions>
-        <ModalStatus>{status}</ModalStatus>
+        <ModalStatus tone={statusTone}>{status}</ModalStatus>
       </form>
     </Modal>
   );
