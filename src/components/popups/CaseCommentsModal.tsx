@@ -32,6 +32,15 @@ function caseMatchesSearch(item: CaseChangeRequestInfo, term: string) {
   return normalizedCaseNumber(item.CaseNumber).includes(query);
 }
 
+function findExactCase(cases: CaseChangeRequestInfo[], term: string) {
+  const query = normalizedCaseNumber(term);
+  if (!query) return null;
+  return (
+    cases.find((item) => normalizedCaseNumber(item.CaseNumber) === query) ??
+    null
+  );
+}
+
 export function CaseCommentsModal() {
   const { user } = useAuth();
   const userEmail = user?.Email ?? "";
@@ -70,6 +79,14 @@ export function CaseCommentsModal() {
     () => cases.find((item) => item.CaseNumber === linkedCase) ?? null,
     [cases, linkedCase]
   );
+
+  useEffect(() => {
+    const exact = findExactCase(cases, search);
+    if (!exact) return;
+    setLinkedCase((current) =>
+      current === exact.CaseNumber ? current : exact.CaseNumber
+    );
+  }, [cases, search]);
 
   useEffect(() => {
     if (!open) return;
@@ -196,6 +213,11 @@ export function CaseCommentsModal() {
                 onChange={(event) => {
                   const value = event.target.value;
                   setSearch(value);
+                  const exact = findExactCase(cases, value);
+                  if (exact) {
+                    setLinkedCase(exact.CaseNumber);
+                    return;
+                  }
                   if (!value.trim()) return;
                   setLinkedCase((current) => {
                     if (!current) return current;

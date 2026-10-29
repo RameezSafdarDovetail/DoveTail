@@ -5,20 +5,32 @@ import type { ReactNode } from "react";
 interface TableCardProps {
   columnsClassName: string;
   headers: string[];
+  centerHeaders?: string[];
+  /** Keep every column at full width and scroll the table horizontally. */
+  scrollable?: boolean;
+  minWidthClassName?: string;
   children: ReactNode;
 }
 
 export function TableCard({
   columnsClassName,
   headers,
+  centerHeaders = [],
+  scrollable = false,
+  minWidthClassName,
   children,
 }: TableCardProps) {
+  const trackWidth = scrollable
+    ? minWidthClassName
+    : "max-[640px]:min-w-[720px]";
+
   return (
     <div className={cn(ui.glass, "overflow-hidden rounded-default")}>
-      <div className="max-[640px]:overflow-x-auto">
+      <div className={scrollable ? "overflow-x-auto" : "max-[640px]:overflow-x-auto"}>
         <div
           className={cn(
-            "grid items-center border-b border-border bg-[#fafbfc] px-5 py-[11px] max-[640px]:min-w-[720px]",
+            "grid items-center border-b border-border bg-[#fafbfc] px-5 py-[11px]",
+            trackWidth,
             columnsClassName
           )}
         >
@@ -26,17 +38,19 @@ export function TableCard({
             <span
               key={header}
               className={cn(
-                "text-[11px] font-bold tracking-[0.06em] text-text-3 uppercase",
-                header === "Actions" && "justify-self-center text-center"
+                "min-w-0 text-[11px] font-bold tracking-[0.06em] text-text-3 uppercase",
+                scrollable && "overflow-hidden whitespace-nowrap",
+                (header === "Actions" || centerHeaders.includes(header)) &&
+                  (scrollable
+                    ? "text-center"
+                    : "justify-self-center text-center")
               )}
             >
               {header}
             </span>
           ))}
         </div>
-        <div className={cn(ui.tableScrollBody, "max-[640px]:min-w-[720px]")}>
-          {children}
-        </div>
+        <div className={cn(ui.tableScrollBody, trackWidth)}>{children}</div>
       </div>
     </div>
   );

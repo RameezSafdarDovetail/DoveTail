@@ -6,6 +6,8 @@ export interface QuoteItem {
   CreatedOn: string;
   Subject: string | null;
   Product: string | null;
+  QuoteAcceptedOn: string | null;
+  QuoteRejectedOn: string | null;
 }
 
 export interface QuotesPageResponse {

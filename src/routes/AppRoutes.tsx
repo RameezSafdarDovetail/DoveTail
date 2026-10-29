@@ -1,17 +1,18 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import { AppLayout } from "../components/layout/AppLayout";
-import { CreateAccountPage } from "../pages/auth/CreateAccountPage";
-import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
-import { LoginPage } from "../pages/auth/LoginPage";
-import { UpdatePasswordPage } from "../pages/auth/UpdatePasswordPage";
-import { AllCasesPage } from "../pages/dashboard/AllCasesPage";
-import { ClosedCasesPage } from "../pages/dashboard/ClosedCasesPage";
-import { HomePage } from "../pages/dashboard/HomePage";
-import { OpenCasesPage } from "../pages/dashboard/OpenCasesPage";
-import { QuotesPage } from "../pages/dashboard/QuotesPage";
-import { GuestRoute } from "./GuestRoute";
 import { paths } from "./paths";
+import { GuestRoute } from "./GuestRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { LoginPage } from "../pages/auth/LoginPage";
+import { HomePage } from "../pages/dashboard/HomePage";
+import { QuotesPage } from "../pages/dashboard/QuotesPage";
+import { AppLayout } from "../components/layout/AppLayout";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AllCasesPage } from "../pages/dashboard/AllCasesPage";
+import { OpenCasesPage } from "../pages/dashboard/OpenCasesPage";
+import { CreateAccountPage } from "../pages/auth/CreateAccountPage";
+import { VerifyAccountPage } from "../pages/auth/VerifyAccountPage";
+import { ClosedCasesPage } from "../pages/dashboard/ClosedCasesPage";
+import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
+import { UpdatePasswordPage } from "../pages/auth/UpdatePasswordPage";
 
 export function AppRoutes() {
   return (
@@ -19,6 +20,7 @@ export function AppRoutes() {
       <Route element={<GuestRoute />}>
         <Route path={paths.login} element={<LoginPage />} />
         <Route path={paths.register} element={<CreateAccountPage />} />
+        <Route path={paths.verify} element={<VerifyAccountPage />} />
         <Route path={paths.forgotPassword} element={<ForgotPasswordPage />} />
         <Route path={paths.updatePassword} element={<UpdatePasswordPage />} />
       </Route>

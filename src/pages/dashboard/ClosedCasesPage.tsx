@@ -2,6 +2,7 @@ import {
   getClosedCases,
   formatCaseDate,
   mapPriorityType,
+  mapCatalogStatus,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
   matchesCreatedOnRange,
@@ -189,6 +190,7 @@ export function ClosedCasesPage() {
           ) : null}
           {!loading &&
             visible.map((item) => {
+              const catalogStatus = mapCatalogStatus(item.Status);
               const title = item.Title || "Untitled case";
               const type = mapPriorityType(item.Priority);
               const resolution = mapCatalogStatusLabel(item.Status);
@@ -197,11 +199,10 @@ export function ClosedCasesPage() {
                 <TableRow
                   key={item.Id}
                   columnsClassName={tableCols.closed}
-                  muted
                   onClick={() => openCaseDetail(item.Id)}
                 >
                   <span
-                    className={cn(ui.caseNumDim, "min-w-0 truncate")}
+                    className={cn(ui.caseNum, "min-w-0 truncate")}
                     title={item.CaseNumber}
                   >
                     {item.CaseNumber}
@@ -221,13 +222,24 @@ export function ClosedCasesPage() {
                     <Pill>{type}</Pill>
                   </div>
                   <span
-                    className="min-w-0 truncate text-[12.5px] text-text-3"
+                    className="min-w-0 truncate text-[12.5px] text-text-2"
                     title={item.Priority}
                   >
                     {item.Priority}
                   </span>
                   <div className="min-w-0 overflow-hidden">
-                    <Badge tone="resolved">{resolution}</Badge>
+                    <Badge
+                      tone={
+                        catalogStatus === "open"
+                          ? "open"
+                          : catalogStatus === "pending"
+                          ? "pending"
+                          : "closed"
+                      }
+                      withDot
+                    >
+                      {resolution}
+                    </Badge>
                   </div>
                   <span className="whitespace-nowrap text-xs text-text-3">
                     {formatCaseDate(item.ResolutionDate ?? "", true)}

@@ -34,7 +34,20 @@ const quoteStatusOptions = [
 type QuoteStatusFilter = (typeof quoteStatusOptions)[number]["id"] | "all";
 
 const quoteTableCols =
-  "grid-cols-[124px_minmax(0,1.15fr)_86px_minmax(180px,220px)_minmax(0,0.55fr)_64px_minmax(158px,184px)] gap-x-2 max-[640px]:min-w-[1080px]";
+  "grid-cols-[136px_minmax(190px,1.45fr)_108px_212px_minmax(150px,1fr)_96px_196px_196px_168px] gap-x-3";
+const quoteTableMinWidth = "min-w-[1600px]";
+
+function QuoteEventDate({ value }: { value: string | null | undefined }) {
+  return (
+    <span className="min-w-0 overflow-hidden text-center whitespace-nowrap text-xs text-text-3">
+      {value ? (
+        formatCaseDate(value, true)
+      ) : (
+        <span className="text-lg font-bold leading-none text-text-1">-</span>
+      )}
+    </span>
+  );
+}
 
 function matchesQuoteStatus(status: string, filter: QuoteStatusFilter) {
   if (filter === "all") return true;
@@ -195,6 +208,8 @@ export function QuotesPage() {
                     "Subject",
                     "Status",
                     "Date",
+                    "Quote Accepted On",
+                    "Quote Rejected On",
                   ],
                   rows: visible.map((item) => [
                     item.QuoteNumber,
@@ -203,6 +218,12 @@ export function QuotesPage() {
                     item.Subject || "—",
                     item.Status,
                     formatCaseDate(item.CreatedOn),
+                    item.QuoteAcceptedOn
+                      ? formatCaseDate(item.QuoteAcceptedOn, true)
+                      : "-",
+                    item.QuoteRejectedOn
+                      ? formatCaseDate(item.QuoteRejectedOn, true)
+                      : "-",
                   ]),
                 })
               }
@@ -282,6 +303,9 @@ export function QuotesPage() {
 
         <TableCard
           columnsClassName={quoteTableCols}
+          scrollable
+          minWidthClassName={quoteTableMinWidth}
+          centerHeaders={["Quote Accepted On", "Quote Rejected On"]}
           headers={[
             "Quote #",
             "Title",
@@ -289,6 +313,8 @@ export function QuotesPage() {
             "Status",
             "Subject",
             "Date",
+            "Quote Accepted On",
+            "Quote Rejected On",
             "Actions",
           ]}
         >
@@ -321,7 +347,7 @@ export function QuotesPage() {
                   >
                     {item.QuoteNumber}
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <div className={cn(ui.caseTitle, "truncate")} title={title}>
                       {title}
                     </div>
@@ -329,10 +355,10 @@ export function QuotesPage() {
                       Re: {subject}
                     </div>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <Pill>{product}</Pill>
                   </div>
-                  <div className="min-w-0 overflow-hidden">
+                  <div className="min-w-0 overflow-hidden" title={statusText}>
                     <Badge tone={mapQuoteStatusTone(statusText)}>
                       {statusText || "—"}
                     </Badge>
@@ -343,10 +369,12 @@ export function QuotesPage() {
                   >
                     {subject}
                   </span>
-                  <span className="whitespace-nowrap text-xs text-text-3">
+                  <span className="min-w-0 overflow-hidden whitespace-nowrap text-xs text-text-3">
                     {formatCaseDate(item.CreatedOn)}
                   </span>
-                  <div className="flex items-center justify-end gap-1.5">
+                  <QuoteEventDate value={item.QuoteAcceptedOn} />
+                  <QuoteEventDate value={item.QuoteRejectedOn} />
+                  <div className="flex min-w-0 items-center justify-end gap-1.5 overflow-hidden whitespace-nowrap">
                     {showActions ? (
                       <>
                         <button

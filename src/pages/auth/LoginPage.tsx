@@ -9,9 +9,10 @@ import { paths } from "../../routes/paths";
 import { useAuth } from "../../hooks/useAuth";
 import { loginContact } from "../../apis/auth";
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../components/buttons/Button";
+import { ApiError, readApiStatusBody } from "../../apis";
 import { AuthLayout } from "../../components/layout/AuthLayout";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PasswordField } from "../../components/form/PasswordField";
 
 function isValidEmail(value: string) {
@@ -21,6 +22,12 @@ function isValidEmail(value: string) {
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const activated =
+    Boolean(location.state) &&
+    typeof location.state === "object" &&
+    "activated" in location.state &&
+    Boolean(location.state.activated);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +72,24 @@ export function LoginPage() {
       login(session);
       navigate(paths.home, { replace: true });
     } catch (error) {
+      if (error instanceof ApiError && error.status === 403) {
+        const body = readApiStatusBody(error.body);
+        if (body?.Code === "PENDING_ACTIVATION") {
+          const trimmedEmail = email.trim();
+          navigate(
+            {
+              pathname: paths.verify,
+              search: `?email=${encodeURIComponent(trimmedEmail)}`,
+            },
+            { state: { email: trimmedEmail } }
+          );
+          return;
+        }
+        if (body?.Code === "ACCOUNT_DISABLED") {
+          setStatus(body.Message || "This account is disabled.");
+          return;
+        }
+      }
       setStatus(error instanceof Error ? error.message : "Failed to sign in");
     } finally {
       setSubmitting(false);
@@ -153,6 +178,11 @@ export function LoginPage() {
               </div>
             </FormField>
           </div>
+          {activated && !status ? (
+            <div className="mt-3 text-[13px] font-bold text-green">
+              Account activated
+            </div>
+          ) : null}
           {status ? (
             <div className="mt-3 text-[13px] font-bold text-red">{status}</div>
           ) : null}

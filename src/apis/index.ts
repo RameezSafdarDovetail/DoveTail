@@ -40,13 +40,41 @@ export async function apiFormRequest<T>(
   return parseApiResponse<T>(response);
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly body: string;
+
+  constructor(status: number, body: string) {
+    super(body || `API request failed (${status})`);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/** JSON `{ Code, Message }` bodies. Call only after checking the status. */
+export function readApiStatusBody(body: string): {
+  Code?: string;
+  Message?: string;
+} | null {
+  try {
+    const value = JSON.parse(body) as unknown;
+    if (!value || typeof value !== "object") return null;
+    const record = value as { Code?: unknown; Message?: unknown };
+    return {
+      Code: typeof record.Code === "string" ? record.Code : undefined,
+      Message: typeof record.Message === "string" ? record.Message : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function parseApiResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
 
   if (!response.ok) {
-    throw new Error(
-      text || `API request failed (${response.status}): ${response.statusText}`
-    );
+    throw new ApiError(response.status, text);
   }
 
   if (response.status === 204 || !text) {

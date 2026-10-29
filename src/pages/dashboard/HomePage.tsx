@@ -2,27 +2,32 @@ import {
   // mapSla,
   mapPriority,
   getActiveCases,
-  mapCatalogStatus,
+  formatCaseDate,
+  type ActiveCase,
   mapPriorityLabel,
+  mapCatalogStatus,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
   // buildDashboardStats,
 } from "../../apis/cases";
-import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { tableCols, ui } from "../../libs/ui";
 import { useModal } from "../../hooks/useModal";
 import { useQuery } from "@tanstack/react-query";
 import { Hero } from "../../components/hero/Hero";
 import { Badge } from "../../components/badges/Badge";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
+import { TableRow } from "../../components/tables/TableCard";
 // import { SlaChip } from "../../components/badges/SlaChip";
 // import { StatCard } from "../../components/cards/StatCard";
 import { QuickAccess } from "../../components/cards/QuickAccess";
 import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { PriorityFilter } from "../../components/buttons/PriorityFilter";
+import { EscalateCaseModal } from "../../components/popups/EscalateCaseModal";
+import { EscalateDetailsModal } from "../../components/popups/EscalateDetailsModal";
 
 type CasePriority = "p1" | "p2" | "p3";
 
@@ -34,6 +39,9 @@ export function HomePage() {
   const { openCaseComments, openCaseDetail } = useModal();
   const [priority, setPriority] = useState<CasePriority | "all">("all");
   const [page, setPage] = useState(1);
+  const [escalateCase, setEscalateCase] = useState<ActiveCase | null>(null);
+  const [escalateDetailsCase, setEscalateDetailsCase] =
+    useState<ActiveCase | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["active-cases", contactId, page, PAGE_SIZE],
@@ -128,29 +136,49 @@ export function HomePage() {
                 P3
               </PriorityFilter>
             </div>
-            <div className="p-0 max-[980px]:overflow-x-auto">
-              <div className="grid grid-cols-[92px_minmax(220px,1fr)_minmax(150px,220px)_70px_92px] items-center gap-3 bg-[#f8fafc] px-[18px] py-[13px] text-[11px] font-extrabold tracking-[0.06em] text-text-3 uppercase max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_minmax(140px,200px)_60px_86px]">
-                <span>Priority</span>
-                <span>Case</span>
-                <span>Status</span>
-                {/* <span>Age</span>
-                <span>SLA</span> */}
+            <div className="max-[640px]:overflow-x-auto">
+              <div
+                className={cn(
+                  "grid items-center border-b border-border bg-[#fafbfc] px-5 py-[11px] max-[640px]:min-w-[720px]",
+                  tableCols.cases
+                )}
+              >
+                {(
+                  [
+                    "Case #",
+                    "Title ",
+                    "Status",
+                    "Priority",
+                    "Created On",
+                    "Actions",
+                  ] as const
+                ).map((header) => (
+                  <span
+                    key={header}
+                    className={cn(
+                      "text-[11px] font-bold tracking-[0.06em] text-text-3 uppercase",
+                      header === "Actions" && "justify-self-center text-center"
+                    )}
+                  >
+                    {header}
+                  </span>
+                ))}
               </div>
               <div
-                className={cn(ui.tableScrollBody, "max-[980px]:min-w-[680px]")}
+                className={cn(ui.tableScrollBody, "max-[640px]:min-w-[720px]")}
               >
                 {loading ? (
-                  <div className="px-[18px] py-4 text-[12.5px] text-text-3">
+                  <div className="px-5 py-4 text-[12.5px] text-text-3">
                     Loading active cases…
                   </div>
                 ) : null}
                 {errorMessage ? (
-                  <div className="px-[18px] py-4 text-[12.5px] text-red">
+                  <div className="px-5 py-4 text-[12.5px] text-red">
                     {errorMessage}
                   </div>
                 ) : null}
                 {!loading && !errorMessage && visibleCases.length === 0 ? (
-                  <div className="px-[18px] py-4 text-[12.5px] text-text-3">
+                  <div className="px-5 py-4 text-[12.5px] text-text-3">
                     No active cases found.
                   </div>
                 ) : null}
@@ -159,26 +187,29 @@ export function HomePage() {
                     const casePriority = mapPriority(item.Priority);
                     const catalogStatus = mapCatalogStatus(item.Status);
                     const statusLabel = mapCatalogStatusLabel(item.Status);
-                    // const slaTone = mapSla(item.Sla);
+                    const title = item.Title || "Untitled case";
 
                     return (
-                      <div
+                      <TableRow
                         key={item.Id}
-                        className="grid cursor-pointer grid-cols-[92px_minmax(220px,1fr)_minmax(150px,220px)_70px_92px] items-center gap-3 border-b border-border-soft px-[18px] py-[13px] text-[12.5px] last:border-b-0 max-[980px]:min-w-[680px] max-[980px]:grid-cols-[86px_minmax(180px,1fr)_minmax(140px,200px)_60px_86px] hover:bg-glass-hover"
+                        columnsClassName={tableCols.cases}
                         onClick={() => openCaseDetail(item.Id)}
                       >
-                        <span>
-                          <PriorityBadge priority={casePriority}>
-                            {mapPriorityLabel(casePriority)}
-                          </PriorityBadge>
+                        <span
+                          className={cn(ui.caseNum, "min-w-0 truncate")}
+                          title={item.CaseNumber}
+                        >
+                          {item.CaseNumber}
                         </span>
-                        <div>
-                          <strong>{item.CaseNumber}</strong>
-                          <small className="mt-0.5 block text-text-3">
-                            {item.Title || "Untitled case"}
-                          </small>
+                        <div className="min-w-0">
+                          <div
+                            className={cn(ui.caseTitle, "truncate")}
+                            title={title}
+                          >
+                            {title}
+                          </div>
                         </div>
-                        <span className="min-w-0 overflow-hidden">
+                        <div className="min-w-0 overflow-hidden">
                           <Badge
                             tone={
                               catalogStatus === "open"
@@ -191,12 +222,41 @@ export function HomePage() {
                           >
                             {statusLabel}
                           </Badge>
+                        </div>
+                        <div className="min-w-0">
+                          <PriorityBadge priority={casePriority}>
+                            {mapPriorityLabel(casePriority)}
+                          </PriorityBadge>
+                        </div>
+                        <span className="whitespace-nowrap text-xs text-text-3">
+                          {formatCaseDate(item.CreatedOn, true)}
                         </span>
-                        {/* <span>{item.CaseAge ?? "—"}</span>
-                        <span>
-                          <SlaChip tone={slaTone}>{item.Sla}</SlaChip>
-                        </span> */}
-                      </div>
+                        <div className="flex items-center justify-center">
+                          {item.IsEscalated ? (
+                            <button
+                              type="button"
+                              className="cursor-pointer rounded-md border border-accent-mid bg-accent-soft px-2.5 py-1 text-[11.5px] font-semibold text-accent transition-[background-color,border-color,opacity] duration-150 hover:border-accent hover:bg-[#e4ecfb]"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setEscalateDetailsCase(item);
+                              }}
+                            >
+                              View Details
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="cursor-pointer rounded-md border border-accent-mid bg-accent px-2.5 py-1 text-[11.5px] font-semibold text-white transition-opacity hover:opacity-90"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setEscalateCase(item);
+                              }}
+                            >
+                              Escalate
+                            </button>
+                          )}
+                        </div>
+                      </TableRow>
                     );
                   })}
               </div>
@@ -230,6 +290,14 @@ export function HomePage() {
             </div>
           </section>
         </div>
+        <EscalateCaseModal
+          caseItem={escalateCase}
+          onClose={() => setEscalateCase(null)}
+        />
+        <EscalateDetailsModal
+          caseItem={escalateDetailsCase}
+          onClose={() => setEscalateDetailsCase(null)}
+        />
       </PageBody>
     </div>
   );

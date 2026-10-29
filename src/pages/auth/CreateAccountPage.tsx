@@ -6,7 +6,7 @@ import {
 } from "../../components/popups/FormPrimitives";
 import { ui } from "../../libs/ui";
 import { cn } from "../../libs/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { paths } from "../../routes/paths";
 import { useState, type FormEvent } from "react";
 import { Button } from "../../components/buttons/Button";
@@ -18,10 +18,8 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-const REGISTER_SUCCESS_MESSAGE =
-  "You’ve registered successfully. You’ll receive an account activation email from our support team. Once your account is activated, you can log in.";
-
 export function CreateAccountPage() {
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,7 +27,6 @@ export function CreateAccountPage() {
   const [retypePassword, setRetypePassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState("");
-  const [registered, setRegistered] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
@@ -102,12 +99,14 @@ export function CreateAccountPage() {
         Email: trimmedEmail,
         Password: password,
       });
-      setRegistered(true);
-      setStatus(REGISTER_SUCCESS_MESSAGE);
-      setPassword("");
-      setRetypePassword("");
+      navigate(
+        {
+          pathname: paths.verify,
+          search: `?email=${encodeURIComponent(trimmedEmail)}`,
+        },
+        { replace: true, state: { email: trimmedEmail } }
+      );
     } catch (error) {
-      setRegistered(false);
       setStatus(
         error instanceof Error ? error.message : "Failed to create account"
       );
@@ -265,12 +264,7 @@ export function CreateAccountPage() {
             </FormField>
           </div>
           {status ? (
-            <div
-              className={cn(
-                "mt-3 text-[13px] leading-normal font-bold",
-                registered ? "text-green" : "text-red"
-              )}
-            >
+            <div className="mt-3 text-[13px] leading-normal font-bold text-red">
               {status}
             </div>
           ) : null}
@@ -280,17 +274,13 @@ export function CreateAccountPage() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting || registered}
+            disabled={submitting}
             className={cn(
               "w-full flex-1",
-              (submitting || registered) && "cursor-not-allowed opacity-60"
+              submitting && "cursor-not-allowed opacity-60"
             )}
           >
-            {submitting
-              ? "Creating account…"
-              : registered
-              ? "Account created"
-              : "Create account"}
+            {submitting ? "Creating account…" : "Create account"}
           </Button>
         </div>
 

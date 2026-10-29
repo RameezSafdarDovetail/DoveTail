@@ -5,12 +5,37 @@ import {
   type CaseDetail,
 } from "../../apis/cases";
 import { ui } from "../../libs/ui";
-import { cn } from "../../libs/utils";
+import { cn, formatStamp } from "../../libs/utils";
 import { Button } from "../buttons/Button";
-import { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useEffect, useRef, useState } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal, ModalActions, ModalHead } from "./Modal";
+import { getPortalComments, type PortalComment } from "../../apis/comments";
 import { FormField, FormGrid, FormLabel, FormSection } from "./FormPrimitives";
+
+const COMMENTS_PAGE_SIZE = 10;
+
+const remarkNavButton =
+  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-accent bg-accent-soft text-xl leading-none font-semibold text-accent shadow-[0_0_0_3px_rgba(26,86,219,0.10)] transition-[background-color,box-shadow] duration-150 hover:bg-[#e4ecfb] hover:shadow-[0_0_0_3px_rgba(26,86,219,0.18)] disabled:cursor-not-allowed disabled:border-border disabled:bg-[#f3f6fb] disabled:text-text-3 disabled:shadow-none";
+
+function commentTitle(comment: PortalComment) {
+  return comment.Title ?? comment.Subject ?? comment.CommentSubject ?? "";
+}
+
+function commentDescription(comment: PortalComment) {
+  return (
+    comment.Description ?? comment.CommentDetail ?? comment.Detail ?? ""
+  );
+}
+
+function commentCreatedOn(comment: PortalComment) {
+  const value = comment.CreatedOn?.trim();
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return formatStamp(date);
+}
 
 function displayValue(value: string | number | null | undefined) {
   if (value == null) return "—";
@@ -39,25 +64,51 @@ function toDataUrl(fileName: string, body: string) {
 }
 
 export function CaseDetailModal() {
+  const { user } = useAuth();
+  const contactId = user?.ContactId ?? "";
   const { modal, closeModal } = useModal();
   const open = modal.name === "case-detail";
   const caseId = modal.caseId ?? "";
   const [detail, setDetail] = useState<CaseDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [comments, setComments] = useState<PortalComment[]>([]);
+  const [commentIndex, setCommentIndex] = useState(0);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsTotal, setCommentsTotal] = useState(0);
+  const [commentsHasMore, setCommentsHasMore] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
+  const [commentsError, setCommentsError] = useState("");
+  const commentsRequestRef = useRef(0);
 
   useEffect(() => {
     if (!open || !caseId) {
       setDetail(null);
       setLoading(false);
       setError("");
+      setComments([]);
+      setCommentIndex(0);
+      setCommentsPage(1);
+      setCommentsTotal(0);
+      setCommentsHasMore(false);
+      setCommentsLoading(false);
+      setCommentsLoadingMore(false);
+      setCommentsError("");
       return;
     }
 
+    const requestId = ++commentsRequestRef.current;
     let cancelled = false;
     setLoading(true);
     setError("");
     setDetail(null);
+    setComments([]);
+    setCommentIndex(0);
+    setCommentsPage(1);
+    setCommentsTotal(0);
+    setCommentsHasMore(false);
+    setCommentsError("");
 
     void getCaseDetailByID(caseId)
       .then((data) => {
@@ -74,10 +125,81 @@ export function CaseDetailModal() {
         if (!cancelled) setLoading(false);
       });
 
+    if (!contactId) {
+      setCommentsLoading(false);
+      setCommentsError("Missing contact id. Please sign in again.");
+    } else {
+      setCommentsLoading(true);
+      void getPortalComments(caseId, contactId, 1, COMMENTS_PAGE_SIZE)
+        .then((page) => {
+          if (cancelled || commentsRequestRef.current !== requestId) return;
+          setComments(page.Data ?? []);
+          setCommentsPage(page.Page || 1);
+          setCommentsTotal(page.TotalRecords ?? page.Data?.length ?? 0);
+          setCommentsHasMore(Boolean(page.HasMore));
+        })
+        .catch((err) => {
+          if (!cancelled && commentsRequestRef.current === requestId) {
+            setCommentsError(
+              err instanceof Error ? err.message : "Failed to load remarks"
+            );
+          }
+        })
+        .finally(() => {
+          if (!cancelled && commentsRequestRef.current === requestId) {
+            setCommentsLoading(false);
+          }
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [open, caseId]);
+  }, [open, caseId, contactId]);
+
+  async function showNextRemark() {
+    if (commentIndex < comments.length - 1) {
+      setCommentIndex((current) => current + 1);
+      return;
+    }
+    if (!commentsHasMore || commentsLoadingMore || !contactId || !caseId) return;
+
+    const requestId = commentsRequestRef.current;
+    const nextPage = commentsPage + 1;
+    const loadedCount = comments.length;
+    setCommentsLoadingMore(true);
+    setCommentsError("");
+    try {
+      const page = await getPortalComments(
+        caseId,
+        contactId,
+        nextPage,
+        COMMENTS_PAGE_SIZE
+      );
+      if (commentsRequestRef.current !== requestId) return;
+      const nextComments = page.Data ?? [];
+      setComments((current) => [...current, ...nextComments]);
+      setCommentsPage(page.Page || nextPage);
+      setCommentsTotal(page.TotalRecords ?? commentsTotal);
+      setCommentsHasMore(Boolean(page.HasMore));
+      if (nextComments.length > 0) {
+        setCommentIndex(loadedCount);
+      }
+    } catch (err) {
+      if (commentsRequestRef.current !== requestId) return;
+      setCommentsError(
+        err instanceof Error ? err.message : "Failed to load remarks"
+      );
+    } finally {
+      setCommentsLoadingMore(false);
+    }
+  }
+
+  const currentComment = comments[commentIndex] ?? null;
+  const canShowPrevious = commentIndex > 0;
+  const canShowNext =
+    commentIndex < comments.length - 1 ||
+    (commentsHasMore && !commentsLoadingMore);
 
   const attachments =
     detail?.Attachments?.filter((item) => item.DocumentBody || item.FileName) ??
@@ -262,6 +384,86 @@ export function CaseDetailModal() {
                 value={displayValue(detail.CommentDetail)}
                 className={cn(ui.fieldControl, ui.fieldTextarea)}
               />
+            </FormField>
+
+            <FormSection>Remarks by Support</FormSection>
+            <FormField full>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-[12.5px] text-text-3">
+                  {commentsTotal > 0
+                    ? `${commentIndex + 1} of ${commentsTotal}`
+                    : ""}
+                </span>
+                {commentsTotal > 1 || commentsHasMore ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={!canShowPrevious}
+                      onClick={() =>
+                        setCommentIndex((current) => Math.max(0, current - 1))
+                      }
+                      aria-label="Previous remark"
+                      className={remarkNavButton}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canShowNext}
+                      onClick={() => void showNextRemark()}
+                      aria-label="Next remark"
+                      className={remarkNavButton}
+                    >
+                      ›
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+              {commentsLoading ? (
+                <div className="py-2 text-[13px] text-text-3">
+                  Loading remarks…
+                </div>
+              ) : null}
+              {commentsError ? (
+                <div className="py-2 text-[13px] font-semibold text-red">
+                  {commentsError}
+                </div>
+              ) : null}
+              {!commentsLoading && !commentsError && !currentComment ? (
+                <div className="py-2 text-[13px] text-text-3">
+                  No remarks from support.
+                </div>
+              ) : null}
+              {currentComment ? (
+                <div className="grid gap-3">
+                  <div>
+                    <FormLabel>Title</FormLabel>
+                    <input
+                      type="text"
+                      readOnly
+                      value={displayValue(commentTitle(currentComment))}
+                      className={ui.fieldControl}
+                    />
+                  </div>
+                  <div>
+                    <FormLabel>Description</FormLabel>
+                    <textarea
+                      readOnly
+                      value={displayValue(commentDescription(currentComment))}
+                      className={cn(ui.fieldControl, ui.fieldTextarea)}
+                    />
+                  </div>
+                  <div>
+                    <FormLabel>Created on</FormLabel>
+                    <input
+                      type="text"
+                      readOnly
+                      value={commentCreatedOn(currentComment)}
+                      className={ui.fieldControl}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </FormField>
           </FormGrid>
         ) : null}

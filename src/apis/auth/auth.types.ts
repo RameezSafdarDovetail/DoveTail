@@ -41,3 +41,8 @@ export interface ResetPasswordResponse {
   message?: string;
   [key: string]: unknown;
 }
+
+export interface VerifyAccessCodePayload {
+  email: string;
+  code: string;
+}

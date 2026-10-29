@@ -117,6 +117,7 @@ export function AllCasesPage() {
                       "Subject",
                       "Status",
                       "Date",
+                      "Resolution Date",
                     ],
                     rows: visible.map((item) => [
                       item.CaseNumber,
@@ -125,6 +126,9 @@ export function AllCasesPage() {
                       item.Priority,
                       mapCatalogStatusLabel(item.Status),
                       formatCaseDate(item.CreatedOn, true),
+                      item.ResolutionDate
+                        ? formatCaseDate(item.ResolutionDate, true)
+                        : "-",
                     ]),
                   })
                 }
@@ -175,7 +179,16 @@ export function AllCasesPage() {
 
         <TableCard
           columnsClassName={tableCols.casesAll}
-          headers={["Case #", "Title", "Type", "Subject", "Status", "Date"]}
+          headers={[
+            "Case #",
+            "Title",
+            "Type",
+            "Subject",
+            "Status",
+            "Date",
+            "Resolution Date",
+          ]}
+          centerHeaders={["Resolution Date"]}
         >
           {loading ? (
             <div className="px-5 py-4 text-[12.5px] text-text-3">
@@ -255,6 +268,15 @@ export function AllCasesPage() {
                   </div>
                   <span className="whitespace-nowrap text-xs text-text-3">
                     {formatCaseDate(item.CreatedOn, true)}
+                  </span>
+                  <span className="justify-self-center text-center whitespace-nowrap text-xs text-text-3">
+                    {item.ResolutionDate ? (
+                      formatCaseDate(item.ResolutionDate, true)
+                    ) : (
+                      <span className="text-lg font-bold leading-none text-text-1">
+                        -
+                      </span>
+                    )}
                   </span>
                 </TableRow>
               );
