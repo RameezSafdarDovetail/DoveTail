@@ -1,7 +1,9 @@
 import {
   getAllCases,
   formatCaseDate,
+  mapPriority,
   mapPriorityType,
+  mapPriorityLabel,
   mapCatalogStatus,
   matchesCaseSearch,
   mapCatalogStatusLabel,
@@ -15,8 +17,8 @@ import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Pill } from "../../components/badges/Pill";
 import { Badge } from "../../components/badges/Badge";
+import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { Button } from "../../components/buttons/Button";
 import { TabPill } from "../../components/buttons/TabPill";
 import { PageBody } from "../../components/layout/PageBody";
@@ -207,7 +209,7 @@ export function AllCasesPage() {
               const catalogStatus = mapCatalogStatus(item.Status);
               const muted = catalogStatus === "closed";
               const title = item.Title || "Untitled case";
-              const type = mapPriorityType(item.Priority);
+              const casePriority = mapPriority(item.Priority);
               const statusLabel = mapCatalogStatusLabel(item.Status);
 
               return (
@@ -238,7 +240,9 @@ export function AllCasesPage() {
                     </div> */}
                   </div>
                   <div className="min-w-0">
-                    <Pill>{type}</Pill>
+                    <PriorityBadge priority={casePriority}>
+                      {mapPriorityLabel(casePriority)}
+                    </PriorityBadge>
                   </div>
                   <div className="min-w-0 overflow-hidden">
                     <Badge

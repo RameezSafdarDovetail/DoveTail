@@ -1,7 +1,9 @@
 import {
   getClosedCases,
   formatCaseDate,
+  mapPriority,
   mapPriorityType,
+  mapPriorityLabel,
   mapCatalogStatus,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
@@ -13,8 +15,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Pill } from "../../components/badges/Pill";
 import { Badge } from "../../components/badges/Badge";
+import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
@@ -189,7 +191,7 @@ export function ClosedCasesPage() {
             visible.map((item) => {
               const catalogStatus = mapCatalogStatus(item.Status);
               const title = item.Title || "Untitled case";
-              const type = mapPriorityType(item.Priority);
+              const casePriority = mapPriority(item.Priority);
               const resolution = mapCatalogStatusLabel(item.Status);
 
               return (
@@ -216,7 +218,9 @@ export function ClosedCasesPage() {
                     </div> */}
                   </div>
                   <div className="min-w-0">
-                    <Pill>{type}</Pill>
+                    <PriorityBadge priority={casePriority}>
+                      {mapPriorityLabel(casePriority)}
+                    </PriorityBadge>
                   </div>
                   <div className="min-w-0 overflow-hidden">
                     <Badge
