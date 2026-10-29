@@ -114,7 +114,6 @@ export function AllCasesPage() {
                       "Case #",
                       "Title",
                       "Type",
-                      "Subject",
                       "Status",
                       "Date",
                       "Resolution Date",
@@ -123,7 +122,6 @@ export function AllCasesPage() {
                       item.CaseNumber,
                       item.Title || "Untitled case",
                       mapPriorityType(item.Priority),
-                      item.Priority,
                       mapCatalogStatusLabel(item.Status),
                       formatCaseDate(item.CreatedOn, true),
                       item.ResolutionDate
@@ -183,7 +181,6 @@ export function AllCasesPage() {
             "Case #",
             "Title",
             "Type",
-            "Subject",
             "Status",
             "Date",
             "Resolution Date",
@@ -243,15 +240,6 @@ export function AllCasesPage() {
                   <div className="min-w-0">
                     <Pill>{type}</Pill>
                   </div>
-                  <span
-                    className={cn(
-                      "min-w-0 truncate text-[12.5px]",
-                      muted ? "text-text-3" : "text-text-2"
-                    )}
-                    title={item.Priority}
-                  >
-                    {item.Priority}
-                  </span>
                   <div className="min-w-0 overflow-hidden">
                     <Badge
                       tone={

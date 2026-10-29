@@ -103,7 +103,6 @@ export function ClosedCasesPage() {
                     "Case #",
                     "Title",
                     "Type",
-                    "Subject",
                     "Resolution",
                     "Resolution Date",
                   ],
@@ -111,7 +110,6 @@ export function ClosedCasesPage() {
                     item.CaseNumber,
                     item.Title || "Untitled case",
                     mapPriorityType(item.Priority),
-                    item.Priority,
                     mapCatalogStatusLabel(item.Status),
                     formatCaseDate(item.ResolutionDate ?? "", true),
                   ]),
@@ -168,7 +166,6 @@ export function ClosedCasesPage() {
             "Case #",
             "Title",
             "Type",
-            "Subject",
             "Resolution",
             "Resolution Date",
           ]}
@@ -221,12 +218,6 @@ export function ClosedCasesPage() {
                   <div className="min-w-0">
                     <Pill>{type}</Pill>
                   </div>
-                  <span
-                    className="min-w-0 truncate text-[12.5px] text-text-2"
-                    title={item.Priority}
-                  >
-                    {item.Priority}
-                  </span>
                   <div className="min-w-0 overflow-hidden">
                     <Badge
                       tone={
