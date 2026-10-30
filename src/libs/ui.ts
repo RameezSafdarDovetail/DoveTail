@@ -45,5 +45,5 @@ export const tableCols = {
   quotes:
     "grid-cols-[124px_minmax(0,1.4fr)_86px_minmax(0,0.8fr)_minmax(100px,118px)_64px] gap-x-3 max-[640px]:min-w-[860px]",
   closed:
-    "grid-cols-[118px_minmax(0,1.4fr)_110px_minmax(120px,140px)_132px] gap-x-3 max-[640px]:min-w-[820px]",
+    "grid-cols-[118px_minmax(0,1.4fr)_110px_minmax(120px,140px)_118px_148px] gap-x-3 max-[640px]:min-w-[980px]",
 } as const;

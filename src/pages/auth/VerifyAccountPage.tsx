@@ -15,22 +15,26 @@ import { paths } from "../../routes/paths";
 import { verifyAccessCode } from "../../apis/auth";
 import { Button } from "../../components/buttons/Button";
 import { ApiError, readApiStatusBody } from "../../apis";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { AuthLayout } from "../../components/layout/AuthLayout";
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function emailFromLocation(searchEmail: string | null, state: unknown) {
-  if (searchEmail?.trim()) return searchEmail.trim();
+function valueFromLocation(
+  searchValue: string | null,
+  state: unknown,
+  key: string
+) {
+  if (searchValue?.trim()) return searchValue.trim();
   if (
     state &&
     typeof state === "object" &&
-    "email" in state &&
-    typeof state.email === "string"
+    key in state &&
+    typeof (state as Record<string, unknown>)[key] === "string"
   ) {
-    return state.email.trim();
+    return ((state as Record<string, unknown>)[key] as string).trim();
   }
   return "";
 }
@@ -40,24 +44,21 @@ export function VerifyAccountPage() {
   const location = useLocation();
   const [params] = useSearchParams();
   const [email, setEmail] = useState(() =>
-    emailFromLocation(params.get("email"), location.state)
+    valueFromLocation(params.get("email"), location.state, "email")
   );
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(() =>
+    valueFromLocation(
+      params.get("code") || params.get("accessCode"),
+      location.state,
+      "code"
+    )
+  );
   const [submitting, setSubmitting] = useState(false);
-  const [activated, setActivated] = useState(false);
   const [status, setStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
     email: "",
     code: "",
   });
-
-  useEffect(() => {
-    if (!activated) return;
-    const timer = window.setTimeout(() => {
-      navigate(paths.login, { replace: true, state: { activated: true } });
-    }, 1600);
-    return () => window.clearTimeout(timer);
-  }, [activated, navigate]);
 
   function validate() {
     const next = { email: "", code: "" };
@@ -79,7 +80,7 @@ export function VerifyAccountPage() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || activated) return;
+    if (submitting) return;
     setStatus("");
     if (!validate()) return;
 
@@ -89,8 +90,7 @@ export function VerifyAccountPage() {
         email: email.trim(),
         code: code.trim(),
       });
-      setActivated(true);
-      setStatus("Account activated");
+      navigate(paths.login, { replace: true, state: { activated: true } });
     } catch (error) {
       if (
         error instanceof ApiError &&
@@ -188,12 +188,7 @@ export function VerifyAccountPage() {
             </FormField>
           </div>
           {status ? (
-            <div
-              className={cn(
-                "mt-3 text-[13px] leading-normal font-bold",
-                activated ? "text-green" : "text-red"
-              )}
-            >
+            <div className="mt-3 text-[13px] leading-normal font-bold text-red">
               {status}
             </div>
           ) : null}
@@ -203,17 +198,13 @@ export function VerifyAccountPage() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting || activated}
+            disabled={submitting}
             className={cn(
               "w-full flex-1",
-              (submitting || activated) && "cursor-not-allowed opacity-60"
+              submitting && "cursor-not-allowed opacity-60"
             )}
           >
-            {activated
-              ? "Account activated"
-              : submitting
-              ? "Verifying…"
-              : "Verify account"}
+            {submitting ? "Verifying…" : "Verify account"}
           </Button>
         </div>
 

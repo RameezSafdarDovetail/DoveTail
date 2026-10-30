@@ -106,6 +106,7 @@ export function ClosedCasesPage() {
                     "Title",
                     "Type",
                     "Resolution",
+                    "Created On",
                     "Resolution Date",
                   ],
                   rows: visible.map((item) => [
@@ -113,6 +114,7 @@ export function ClosedCasesPage() {
                     item.Title || "Untitled case",
                     mapPriorityType(item.Priority),
                     mapCatalogStatusLabel(item.Status),
+                    formatCaseDate(item.CreatedOn, true),
                     formatCaseDate(item.ResolutionDate ?? "", true),
                   ]),
                 })
@@ -169,6 +171,7 @@ export function ClosedCasesPage() {
             "Title",
             "Type",
             "Resolution",
+            "Created On",
             "Resolution Date",
           ]}
         >
@@ -236,6 +239,9 @@ export function ClosedCasesPage() {
                       {resolution}
                     </Badge>
                   </div>
+                  <span className="whitespace-nowrap text-xs text-text-3">
+                    {formatCaseDate(item.CreatedOn, true)}
+                  </span>
                   <span className="whitespace-nowrap text-xs text-text-3">
                     {formatCaseDate(item.ResolutionDate ?? "", true)}
                   </span>

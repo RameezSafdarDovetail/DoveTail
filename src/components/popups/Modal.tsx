@@ -9,6 +9,7 @@ interface ModalProps {
   labelledBy: string;
   onClose: () => void;
   closeOnBackdrop?: boolean;
+  size?: "default" | "compact";
   children: ReactNode;
 }
 
@@ -17,6 +18,7 @@ export function Modal({
   labelledBy,
   onClose,
   closeOnBackdrop = false,
+  size = "default",
   children,
 }: ModalProps) {
   if (!open) return null;
@@ -31,7 +33,10 @@ export function Modal({
       }}
     >
       <div
-        className="max-h-[min(720px,calc(100vh-48px))] w-[min(760px,100%)] overflow-auto rounded-lg border border-white/75 bg-white/98 shadow-modal max-[640px]:max-h-[calc(100vh-24px)]"
+        className={cn(
+          "max-h-[min(720px,calc(100vh-48px))] overflow-auto rounded-lg border border-white/75 bg-white/98 shadow-modal max-[640px]:max-h-[calc(100vh-24px)]",
+          size === "compact" ? "w-[min(440px,100%)]" : "w-[min(760px,100%)]"
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

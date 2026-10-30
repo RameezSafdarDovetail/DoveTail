@@ -10,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { paths } from "../../routes/paths";
 import { useState, type FormEvent } from "react";
 import { Button } from "../../components/buttons/Button";
+import { Modal } from "../../components/popups/Modal";
 import { AuthLayout } from "../../components/layout/AuthLayout";
 import { checkEmailExists, registerContact } from "../../apis/auth";
 import { PasswordField } from "../../components/form/PasswordField";
@@ -26,6 +27,7 @@ export function CreateAccountPage() {
   const [password, setPassword] = useState("");
   const [retypePassword, setRetypePassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [signedUp, setSignedUp] = useState(false);
   const [status, setStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
@@ -75,9 +77,13 @@ export function CreateAccountPage() {
     return Object.values(next).every((value) => !value);
   }
 
+  function goToLogin() {
+    navigate(paths.login, { replace: true });
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || signedUp) return;
     setStatus("");
     if (!validate()) return;
 
@@ -99,13 +105,7 @@ export function CreateAccountPage() {
         Email: trimmedEmail,
         Password: password,
       });
-      navigate(
-        {
-          pathname: paths.verify,
-          search: `?email=${encodeURIComponent(trimmedEmail)}`,
-        },
-        { replace: true, state: { email: trimmedEmail } }
-      );
+      setSignedUp(true);
     } catch (error) {
       setStatus(
         error instanceof Error ? error.message : "Failed to create account"
@@ -274,10 +274,10 @@ export function CreateAccountPage() {
           <Button
             variant="primary"
             type="submit"
-            disabled={submitting}
+            disabled={submitting || signedUp}
             className={cn(
               "w-full flex-1",
-              submitting && "cursor-not-allowed opacity-60"
+              (submitting || signedUp) && "cursor-not-allowed opacity-60"
             )}
           >
             {submitting ? "Creating account…" : "Create account"}
@@ -294,6 +294,43 @@ export function CreateAccountPage() {
           </Link>
         </div>
       </form>
+
+      <Modal
+        open={signedUp}
+        labelledBy="signup-success-title"
+        onClose={goToLogin}
+        size="compact"
+      >
+        <div className="px-6 pt-7 pb-2 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-green-bg text-green shadow-[0_0_0_6px_rgba(22,163,74,0.12)]">
+            <svg className="size-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6 12.5 10 16.5 18 8"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <h2
+            id="signup-success-title"
+            className="mt-4 text-lg font-extrabold text-text-1"
+          >
+            Signed up successfully
+          </h2>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-text-2">
+            You’ve signed up successfully. Our support team will send you an
+            account verification link. Open that link and verify your access
+            code to activate your account.
+          </p>
+        </div>
+        <div className="px-6 pt-4 pb-6">
+          <Button variant="primary" className="w-full justify-center" onClick={goToLogin}>
+            Go to login
+          </Button>
+        </div>
+      </Modal>
     </AuthLayout>
   );
 }
