@@ -59,14 +59,26 @@ export function compareCreatedOnDesc(
   return 0;
 }
 
+const SHORT_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
 export function formatCaseDate(iso: string, withYear = false) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    ...(withYear ? { year: "numeric" as const } : {}),
-  });
+  const formatted = `${date.getDate()} ${SHORT_MONTHS[date.getMonth()]}`;
+  return withYear ? `${formatted} ${date.getFullYear()}` : formatted;
 }
 
 /** Matches statuses like "84 Problem Solved". */

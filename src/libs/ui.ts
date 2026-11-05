@@ -39,9 +39,9 @@ export const ui = {
 
 export const tableCols = {
   cases:
-    "grid-cols-[118px_minmax(0,1.5fr)_minmax(118px,140px)_110px_118px_minmax(100px,118px)] gap-x-3 max-[640px]:min-w-[920px]",
+    "grid-cols-[118px_minmax(0,1.35fr)_minmax(188px,220px)_96px_118px_minmax(108px,124px)] gap-x-3 max-[640px]:min-w-[980px]",
   casesAll:
-    "grid-cols-[118px_minmax(0,1.4fr)_110px_minmax(132px,152px)_96px_minmax(120px,140px)] gap-x-3 max-[640px]:min-w-[920px]",
+    "grid-cols-[118px_minmax(0,1.25fr)_88px_minmax(188px,220px)_108px_minmax(128px,148px)] gap-x-3 max-[640px]:min-w-[980px]",
   quotes:
     "grid-cols-[124px_minmax(0,1.4fr)_86px_minmax(0,0.8fr)_minmax(100px,118px)_64px] gap-x-3 max-[640px]:min-w-[860px]",
   closed:

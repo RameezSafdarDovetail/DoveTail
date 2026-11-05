@@ -1,9 +1,8 @@
 import {
-  getClosedCases,
-  formatCaseDate,
   mapPriority,
+  formatCaseDate,
+  getClosedCases,
   mapPriorityType,
-  mapPriorityLabel,
   mapCatalogStatus,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
@@ -16,13 +15,13 @@ import { useModal } from "../../hooks/useModal";
 import { cn, pluralize } from "../../libs/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "../../components/badges/Badge";
-import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { Button } from "../../components/buttons/Button";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FilterPill } from "../../components/buttons/FilterPill";
 import { SearchInput } from "../../components/layout/SearchInput";
+import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
 
@@ -104,7 +103,7 @@ export function ClosedCasesPage() {
                   headers: [
                     "Case #",
                     "Title",
-                    "Type",
+                    "Priority",
                     "Resolution",
                     "Created On",
                     "Resolution Date",
@@ -169,7 +168,7 @@ export function ClosedCasesPage() {
           headers={[
             "Case #",
             "Title",
-            "Type",
+            "Priority",
             "Resolution",
             "Created On",
             "Resolution Date",
@@ -222,7 +221,7 @@ export function ClosedCasesPage() {
                   </div>
                   <div className="min-w-0">
                     <PriorityBadge priority={casePriority}>
-                      {mapPriorityLabel(casePriority)}
+                      {mapPriorityType(item.Priority)}
                     </PriorityBadge>
                   </div>
                   <div className="min-w-0 overflow-hidden">

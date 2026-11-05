@@ -1,12 +1,13 @@
 import {
   // mapSla,
   mapPriority,
+  formatCaseDate,
   getActiveCases,
   type ActiveCase,
+  mapPriorityType,
   mapCatalogStatus,
   mapPriorityLabel,
   matchesCaseSearch,
-  formatCaseDate,
   compareCreatedOnDesc,
   mapCatalogStatusLabel,
   matchesCreatedOnRange,
@@ -252,7 +253,7 @@ export function OpenCasesPage() {
                       {item.Priority}
                     </div> */}
                   </div>
-                  <div className="min-w-0 overflow-hidden">
+                  <div className="min-w-0">
                     <Badge
                       tone={
                         catalogStatus === "open"
@@ -268,7 +269,7 @@ export function OpenCasesPage() {
                   </div>
                   <div className="min-w-0">
                     <PriorityBadge priority={casePriority}>
-                      {mapPriorityLabel(casePriority)}
+                      {mapPriorityType(item.Priority)}
                     </PriorityBadge>
                   </div>
                   <span className="whitespace-nowrap text-xs text-text-3">

@@ -3,7 +3,6 @@ import {
   formatCaseDate,
   mapPriority,
   mapPriorityType,
-  mapPriorityLabel,
   mapCatalogStatus,
   matchesCaseSearch,
   mapCatalogStatusLabel,
@@ -18,13 +17,13 @@ import { cn, pluralize } from "../../libs/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "../../components/badges/Badge";
-import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { Button } from "../../components/buttons/Button";
 import { TabPill } from "../../components/buttons/TabPill";
 import { PageBody } from "../../components/layout/PageBody";
 import { exportPortalReport } from "../../libs/exportReport";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchInput } from "../../components/layout/SearchInput";
+import { PriorityBadge } from "../../components/badges/PriorityBadge";
 import { TableCard, TableRow } from "../../components/tables/TableCard";
 import { DateRangeFilter } from "../../components/layout/DateRangeFilter";
 
@@ -115,9 +114,9 @@ export function AllCasesPage() {
                     headers: [
                       "Case #",
                       "Title",
-                      "Type",
+                      "Priority",
                       "Status",
-                      "Date",
+                      "Created On",
                       "Resolution Date",
                     ],
                     rows: visible.map((item) => [
@@ -182,9 +181,9 @@ export function AllCasesPage() {
           headers={[
             "Case #",
             "Title",
-            "Type",
+            "Priority",
             "Status",
-            "Date",
+            "Created On",
             "Resolution Date",
           ]}
           centerHeaders={["Resolution Date"]}
@@ -241,10 +240,10 @@ export function AllCasesPage() {
                   </div>
                   <div className="min-w-0">
                     <PriorityBadge priority={casePriority}>
-                      {mapPriorityLabel(casePriority)}
+                      {mapPriorityType(item.Priority)}
                     </PriorityBadge>
                   </div>
-                  <div className="min-w-0 overflow-hidden">
+                  <div className="min-w-0">
                     <Badge
                       tone={
                         catalogStatus === "open"

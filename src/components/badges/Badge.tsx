@@ -32,9 +32,9 @@ const dots: Record<BadgeTone, string> = {
 
 export function Badge({ tone, children, withDot = false }: BadgeProps) {
   return (
-    <span className={cn('inline-flex items-center gap-[5px] rounded-pill px-2.5 py-[3px] text-[11.5px] font-semibold whitespace-nowrap', tones[tone])}>
-      {withDot ? <span className={cn('size-[5px] shrink-0 rounded-full', dots[tone])} /> : null}
-      {children}
+    <span className={cn('inline-flex w-fit max-w-full items-start gap-[5px] rounded-pill px-2.5 py-[3px] text-[11.5px] font-semibold leading-snug', tones[tone])}>
+      {withDot ? <span className={cn('mt-[5px] size-[5px] shrink-0 rounded-full', dots[tone])} /> : null}
+      <span className="min-w-0 whitespace-normal break-words">{children}</span>
     </span>
   );
 }
