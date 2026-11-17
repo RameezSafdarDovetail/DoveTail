@@ -2,6 +2,10 @@
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const API_SUBSCRIPTION_KEY = import.meta.env.PROD
+  ? import.meta.env.VITE_API_PROD_OCP_APIM_SUBSCRIPTION_KEY
+  : import.meta.env.VITE_API_DEV_OCP_APIM_SUBSCRIPTION_KEY;
+
 export function apiUrl(path = "") {
   const base = API_BASE_URL.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
@@ -19,6 +23,7 @@ export async function apiRequest<T>(
       "Content-Type": "application/json",
       // ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
+      "Ocp-Apim-Subscription-Key": API_SUBSCRIPTION_KEY,
     },
   });
 
@@ -34,6 +39,7 @@ export async function apiFormRequest<T>(
     headers: {
       // ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
+      "Ocp-Apim-Subscription-Key": API_SUBSCRIPTION_KEY,
     },
   });
 
