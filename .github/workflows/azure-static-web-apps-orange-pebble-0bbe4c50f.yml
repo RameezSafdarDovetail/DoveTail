@@ -41,7 +41,7 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL_PROD }}
-          VITE_API_PROD_OCP_APIM_SUBSCRIPTION_KEY: ${{ secrets.PROD_APIM_KEY }}
+          VITE_API_OCP_APIM_SUBSCRIPTION_KEY: ${{ secrets.PROD_APIM_KEY }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ORANGE_PEBBLE_0BBE4C50F }}
           action: "upload"

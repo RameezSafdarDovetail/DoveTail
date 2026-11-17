@@ -2,9 +2,7 @@
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const API_SUBSCRIPTION_KEY = import.meta.env.PROD
-  ? import.meta.env.VITE_API_PROD_OCP_APIM_SUBSCRIPTION_KEY
-  : import.meta.env.VITE_API_DEV_OCP_APIM_SUBSCRIPTION_KEY;
+const API_SUBSCRIPTION_KEY = import.meta.env.VITE_API_OCP_APIM_SUBSCRIPTION_KEY;
 
 export function apiUrl(path = "") {
   const base = API_BASE_URL.replace(/\/+$/, "");
